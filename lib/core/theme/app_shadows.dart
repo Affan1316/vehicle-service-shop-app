@@ -24,7 +24,7 @@ class AppShadows {
 
   static const List<BoxShadow> glowOrange = [
     BoxShadow(
-      color: AppColors.orange,
+      color: AppColors.primary,
       offset: Offset(0, 0),
       blurRadius: 8,
       spreadRadius: 1,
@@ -33,7 +33,7 @@ class AppShadows {
 
   static const List<BoxShadow> glowTeal = [
     BoxShadow(
-      color: AppColors.teal,
+      color: AppColors.successText,
       offset: Offset(0, 0),
       blurRadius: 8,
       spreadRadius: 1,
@@ -42,7 +42,7 @@ class AppShadows {
 
   static const List<BoxShadow> glowRed = [
     BoxShadow(
-      color: AppColors.red,
+      color: AppColors.dangerText,
       offset: Offset(0, 0),
       blurRadius: 8,
       spreadRadius: 1,

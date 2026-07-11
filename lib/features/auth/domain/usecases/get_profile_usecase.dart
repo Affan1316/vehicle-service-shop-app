@@ -1,13 +1,14 @@
 import 'package:dartz/dartz.dart';
 import '../../../../core/error/failures.dart';
+import '../entities/user.dart';
 import '../repositories/auth_repository.dart';
 
-class LogoutUseCase {
+class GetProfileUseCase {
   final AuthRepository repository;
 
-  LogoutUseCase(this.repository);
+  GetProfileUseCase(this.repository);
 
-  Future<Either<Failure, void>> call() {
-    return repository.logout();
+  Future<Either<Failure, User>> call() {
+    return repository.getProfile();
   }
 }
