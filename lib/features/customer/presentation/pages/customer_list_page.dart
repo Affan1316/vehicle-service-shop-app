@@ -252,8 +252,11 @@ class _CustomerListPageState extends State<CustomerListPage> {
                           ),
                           child: InkWell(
                             borderRadius: BorderRadius.circular(8),
-                            onTap: () {
-                              context.push('/customers/${customer.id}');
+                            onTap: () async {
+                              await context.push('/customers/${customer.id}');
+                              if (context.mounted) {
+                                context.read<CustomerBloc>().add(const FetchCustomers());
+                              }
                             },
                             child: Padding(
                               padding: const EdgeInsets.all(16.0),

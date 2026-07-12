@@ -6,6 +6,10 @@ import '../../features/auth/presentation/pages/login_page.dart';
 import '../../features/auth/presentation/pages/register_page.dart';
 import '../../features/customer/presentation/pages/customer_list_page.dart';
 import '../../features/customer/presentation/pages/customer_hub_page.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
+import '../di/injection_container.dart';
+import '../../features/customer/presentation/bloc/customer_bloc.dart';
+import '../../features/customer/presentation/bloc/vehicle_bloc.dart';
 import 'route_names.dart';
 
 class AppRouter {
@@ -70,14 +74,27 @@ class AppRouter {
       GoRoute(
         name: RouteNames.customerListName,
         path: RouteNames.customerListPath,
-        builder: (context, state) => const CustomerListPage(),
+        builder: (context, state) => BlocProvider<CustomerBloc>(
+          create: (context) => sl<CustomerBloc>(),
+          child: const CustomerListPage(),
+        ),
       ),
       GoRoute(
         name: RouteNames.customerHubName,
         path: RouteNames.customerHubPath,
         builder: (context, state) {
           final id = state.pathParameters['id'] ?? '';
-          return CustomerHubPage(customerId: id);
+          return MultiBlocProvider(
+            providers: [
+              BlocProvider<CustomerBloc>(
+                create: (context) => sl<CustomerBloc>(),
+              ),
+              BlocProvider<VehicleBloc>(
+                create: (context) => sl<VehicleBloc>(),
+              ),
+            ],
+            child: CustomerHubPage(customerId: id),
+          );
         },
       ),
     ],

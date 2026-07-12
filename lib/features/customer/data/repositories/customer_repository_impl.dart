@@ -21,7 +21,8 @@ class CustomerRepositoryImpl implements CustomerRepository {
       return const Left(ServerFailure('No internet connection'));
     }
     try {
-      final customers = await _remoteDataSource.getCustomers(limit: limit, offset: offset);
+      final customers =
+          await _remoteDataSource.getCustomers(limit: limit, offset: offset);
       return Right(customers);
     } on ValidationException catch (e) {
       return Left(ValidationFailure(e.message));

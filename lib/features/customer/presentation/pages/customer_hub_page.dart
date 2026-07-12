@@ -454,59 +454,72 @@ class _CustomerHubPageState extends State<CustomerHubPage> {
                                 child: Padding(
                                   padding: const EdgeInsets.only(bottom: 24.0),
                                   child: Container(
-                                    padding: const EdgeInsets.all(16),
                                     decoration: BoxDecoration(
                                       color: AppColors.bgSurface,
                                       borderRadius: BorderRadius.circular(8),
-                                      border: Border(
-                                        left: BorderSide(color: color, width: 4),
-                                        top: const BorderSide(color: AppColors.borderDefault),
-                                        right: const BorderSide(color: AppColors.borderDefault),
-                                        bottom: const BorderSide(color: AppColors.borderDefault),
-                                      ),
+                                      border: Border.all(color: AppColors.borderDefault),
                                     ),
-                                    child: Column(
-                                      crossAxisAlignment: CrossAxisAlignment.start,
-                                      children: [
-                                        Row(
-                                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                    child: ClipRRect(
+                                      borderRadius: BorderRadius.circular(8),
+                                      child: IntrinsicHeight(
+                                        child: Row(
+                                          crossAxisAlignment: CrossAxisAlignment.stretch,
                                           children: [
-                                            Expanded(
-                                              child: Text(
-                                                event.title,
-                                                style: AppTypography.bodyLarge.copyWith(
-                                                  color: AppColors.textPrimary,
-                                                  fontWeight: FontWeight.bold,
-                                                ),
-                                              ),
+                                            Container(
+                                              width: 4,
+                                              color: color,
                                             ),
-                                            const SizedBox(width: 8),
-                                            Text(
-                                              '${event.date.month}/${event.date.day}/${event.date.year}',
-                                              style: AppTypography.bodySmall.copyWith(
-                                                color: AppColors.textSecondary,
+                                            Expanded(
+                                              child: Padding(
+                                                padding: const EdgeInsets.all(16),
+                                                child: Column(
+                                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                                  children: [
+                                                    Row(
+                                                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                                      children: [
+                                                        Expanded(
+                                                          child: Text(
+                                                            event.title,
+                                                            style: AppTypography.bodyLarge.copyWith(
+                                                              color: AppColors.textPrimary,
+                                                              fontWeight: FontWeight.bold,
+                                                            ),
+                                                          ),
+                                                        ),
+                                                        const SizedBox(width: 8),
+                                                        Text(
+                                                          '${event.date.month}/${event.date.day}/${event.date.year}',
+                                                          style: AppTypography.bodySmall.copyWith(
+                                                            color: AppColors.textSecondary,
+                                                          ),
+                                                        ),
+                                                      ],
+                                                    ),
+                                                    const SizedBox(height: 8),
+                                                    Text(
+                                                      event.description,
+                                                      style: AppTypography.bodyMedium.copyWith(
+                                                        color: AppColors.textSecondary,
+                                                      ),
+                                                    ),
+                                                    if (event.amount != null) ...[
+                                                      const SizedBox(height: 8),
+                                                      Text(
+                                                        event.amount!,
+                                                        style: AppTypography.monospace.copyWith(
+                                                          color: AppColors.textPrimary,
+                                                          fontWeight: FontWeight.bold,
+                                                        ),
+                                                      ),
+                                                    ],
+                                                  ],
+                                                ),
                                               ),
                                             ),
                                           ],
                                         ),
-                                        const SizedBox(height: 8),
-                                        Text(
-                                          event.description,
-                                          style: AppTypography.bodyMedium.copyWith(
-                                            color: AppColors.textSecondary,
-                                          ),
-                                        ),
-                                        if (event.amount != null) ...[
-                                          const SizedBox(height: 8),
-                                          Text(
-                                            event.amount!,
-                                            style: AppTypography.monospace.copyWith(
-                                              color: AppColors.textPrimary,
-                                              fontWeight: FontWeight.bold,
-                                            ),
-                                          ),
-                                        ],
-                                      ],
+                                      ),
                                     ),
                                   ),
                                 ),

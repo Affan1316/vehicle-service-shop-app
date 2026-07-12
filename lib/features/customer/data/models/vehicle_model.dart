@@ -17,7 +17,7 @@ class VehicleModel extends Vehicle {
       make: json['make'] as String,
       model: json['model'] as String,
       year: json['year'] as int,
-      currentMileage: json['current_mileage'] as int,
+      currentMileage: (json['current_mileage'] as int?) ?? 0,
     );
   }
 
