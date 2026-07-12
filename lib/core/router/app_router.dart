@@ -4,6 +4,8 @@ import '../../features/auth/presentation/bloc/auth_bloc.dart';
 import '../../features/auth/presentation/bloc/auth_state.dart';
 import '../../features/auth/presentation/pages/login_page.dart';
 import '../../features/auth/presentation/pages/register_page.dart';
+import '../../features/customer/presentation/pages/customer_list_page.dart';
+import '../../features/customer/presentation/pages/customer_hub_page.dart';
 import 'route_names.dart';
 
 class AppRouter {
@@ -49,11 +51,34 @@ class AppRouter {
       GoRoute(
         name: RouteNames.dashboardName,
         path: RouteNames.dashboardPath,
-        builder: (context, state) => const Scaffold(
+        builder: (context, state) => Scaffold(
           body: Center(
-            child: Text('Dashboard Placeholder'),
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                const Text('Dashboard Placeholder'),
+                const SizedBox(height: 16),
+                ElevatedButton(
+                  onPressed: () => context.push('/customers'),
+                  child: const Text('Go to Customers Directory'),
+                ),
+              ],
+            ),
           ),
         ),
+      ),
+      GoRoute(
+        name: RouteNames.customerListName,
+        path: RouteNames.customerListPath,
+        builder: (context, state) => const CustomerListPage(),
+      ),
+      GoRoute(
+        name: RouteNames.customerHubName,
+        path: RouteNames.customerHubPath,
+        builder: (context, state) {
+          final id = state.pathParameters['id'] ?? '';
+          return CustomerHubPage(customerId: id);
+        },
       ),
     ],
   );

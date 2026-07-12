@@ -11,6 +11,7 @@ import '../network/retry_interceptor.dart';
 import '../storage/local_storage.dart';
 import '../storage/secure_storage.dart';
 import 'auth_module.dart';
+import 'customer_module.dart';
 
 final sl = GetIt.instance;
 
@@ -35,4 +36,5 @@ Future<void> init() async {
 
   // Features
   initAuth();
+  initCustomer();
 }

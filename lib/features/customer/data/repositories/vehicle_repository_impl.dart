@@ -2,18 +2,18 @@ import 'package:dartz/dartz.dart';
 import '../../../../core/error/exceptions.dart';
 import '../../../../core/error/failures.dart';
 import '../../../../core/network/network_info.dart';
-import '../../domain/entities/customer.dart';
-import '../../domain/repositories/customer_repository.dart';
-import '../datasources/customer_remote_datasource.dart';
+import '../../domain/entities/vehicle.dart';
+import '../../domain/repositories/vehicle_repository.dart';
+import '../datasources/vehicle_remote_datasource.dart';
 
-class CustomerRepositoryImpl implements CustomerRepository {
-  final CustomerRemoteDataSource _remoteDataSource;
+class VehicleRepositoryImpl implements VehicleRepository {
+  final VehicleRemoteDataSource _remoteDataSource;
   final NetworkInfo _networkInfo;
 
-  CustomerRepositoryImpl(this._remoteDataSource, this._networkInfo);
+  VehicleRepositoryImpl(this._remoteDataSource, this._networkInfo);
 
   @override
-  Future<Either<Failure, List<Customer>>> getCustomers({
+  Future<Either<Failure, List<Vehicle>>> getVehicles({
     int limit = 50,
     int offset = 0,
   }) async {
@@ -21,8 +21,8 @@ class CustomerRepositoryImpl implements CustomerRepository {
       return const Left(ServerFailure('No internet connection'));
     }
     try {
-      final customers = await _remoteDataSource.getCustomers(limit: limit, offset: offset);
-      return Right(customers);
+      final vehicles = await _remoteDataSource.getVehicles(limit: limit, offset: offset);
+      return Right(vehicles);
     } on ValidationException catch (e) {
       return Left(ValidationFailure(e.message));
     } on ServerException catch (e) {
@@ -33,13 +33,13 @@ class CustomerRepositoryImpl implements CustomerRepository {
   }
 
   @override
-  Future<Either<Failure, Customer>> getCustomerById(String id) async {
+  Future<Either<Failure, Vehicle>> getVehicleByVin(String vin) async {
     if (!await _networkInfo.isConnected) {
       return const Left(ServerFailure('No internet connection'));
     }
     try {
-      final customer = await _remoteDataSource.getCustomerById(id);
-      return Right(customer);
+      final vehicle = await _remoteDataSource.getVehicleByVin(vin);
+      return Right(vehicle);
     } on ValidationException catch (e) {
       return Left(ValidationFailure(e.message));
     } on ServerException catch (e) {
@@ -50,52 +50,46 @@ class CustomerRepositoryImpl implements CustomerRepository {
   }
 
   @override
-  Future<Either<Failure, Customer>> createCustomer({
-    required String name,
-    required String customerType,
-    String? billingAddress,
-    required bool taxExempt,
+  Future<Either<Failure, List<Vehicle>>> getVehiclesByCustomer(String customerId) async {
+    if (!await _networkInfo.isConnected) {
+      return const Left(ServerFailure('No internet connection'));
+    }
+    try {
+      // Query a larger limit to ensure we capture the customer's vehicles
+      final vehicles = await _remoteDataSource.getVehicles(limit: 100);
+      final filtered = vehicles.where((v) => v.customerId == customerId).toList();
+      return Right(filtered);
+    } on ValidationException catch (e) {
+      return Left(ValidationFailure(e.message));
+    } on ServerException catch (e) {
+      return Left(ServerFailure(e.message));
+    } catch (e) {
+      return Left(ServerFailure(e.toString()));
+    }
+  }
+
+  @override
+  Future<Either<Failure, Vehicle>> registerVehicle({
+    required String vin,
+    required String customerId,
+    required String make,
+    required String model,
+    required int year,
+    required int currentMileage,
   }) async {
     if (!await _networkInfo.isConnected) {
       return const Left(ServerFailure('No internet connection'));
     }
     try {
-      final customer = await _remoteDataSource.createCustomer(
-        name: name,
-        customerType: customerType,
-        billingAddress: billingAddress,
-        taxExempt: taxExempt,
+      final vehicle = await _remoteDataSource.registerVehicle(
+        vin: vin,
+        customerId: customerId,
+        make: make,
+        model: model,
+        year: year,
+        currentMileage: currentMileage,
       );
-      return Right(customer);
-    } on ValidationException catch (e) {
-      return Left(ValidationFailure(e.message));
-    } on ServerException catch (e) {
-      return Left(ServerFailure(e.message));
-    } catch (e) {
-      return Left(ServerFailure(e.toString()));
-    }
-  }
-
-  @override
-  Future<Either<Failure, Customer>> updateCustomer({
-    required String id,
-    String? name,
-    String? customerType,
-    String? billingAddress,
-    bool? taxExempt,
-  }) async {
-    if (!await _networkInfo.isConnected) {
-      return const Left(ServerFailure('No internet connection'));
-    }
-    try {
-      final customer = await _remoteDataSource.updateCustomer(
-        id: id,
-        name: name,
-        customerType: customerType,
-        billingAddress: billingAddress,
-        taxExempt: taxExempt,
-      );
-      return Right(customer);
+      return Right(vehicle);
     } on ValidationException catch (e) {
       return Left(ValidationFailure(e.message));
     } on ServerException catch (e) {
