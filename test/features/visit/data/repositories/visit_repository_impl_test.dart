@@ -6,7 +6,6 @@ import 'package:wheels_doc/core/network/network_info.dart';
 import 'package:wheels_doc/features/visit/data/datasources/visit_remote_datasource.dart';
 import 'package:wheels_doc/features/visit/data/models/visit_model.dart';
 import 'package:wheels_doc/features/visit/data/repositories/visit_repository_impl.dart';
-import 'package:wheels_doc/features/visit/domain/entities/visit.dart';
 
 class MockVisitRemoteDataSource extends Mock implements VisitRemoteDataSource {}
 class MockNetworkInfo extends Mock implements NetworkInfo {}

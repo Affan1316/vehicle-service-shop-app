@@ -59,6 +59,25 @@ class VisitDrawerContent extends StatelessWidget {
     return status.replaceAll('_', ' ').toUpperCase();
   }
 
+  List<String> _getAllowedTransitions(String currentStatus) {
+    switch (currentStatus) {
+      case 'checked_in':
+        return ['checked_in', 'in_diagnosis', 'awaiting_quote', 'in_service'];
+      case 'in_diagnosis':
+        return ['in_diagnosis', 'awaiting_quote', 'in_service'];
+      case 'awaiting_quote':
+        return ['awaiting_quote', 'in_service', 'completed'];
+      case 'in_service':
+        return ['in_service', 'awaiting_pickup'];
+      case 'awaiting_pickup':
+        return ['awaiting_pickup', 'completed'];
+      case 'completed':
+        return ['completed'];
+      default:
+        return [currentStatus];
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     // Role checking
@@ -68,14 +87,8 @@ class VisitDrawerContent extends StatelessWidget {
 
     final bool isCompleted = visit.status == 'completed' || visit.checkedOutAt != null;
 
-    final statuses = [
-      'checked_in',
-      'in_diagnosis',
-      'awaiting_quote',
-      'in_service',
-      'awaiting_pickup',
-      'completed'
-    ];
+    final allowedStatuses = _getAllowedTransitions(visit.status);
+    final bool canCheckOut = visit.status == 'awaiting_quote' || visit.status == 'awaiting_pickup';
 
     return Container(
       width: MediaQuery.of(context).size.width >= 768 ? 400 : double.infinity,
@@ -169,14 +182,14 @@ class VisitDrawerContent extends StatelessWidget {
                       decoration: const InputDecoration(
                         border: OutlineInputBorder(),
                       ),
-                      items: statuses.map((status) {
+                      items: allowedStatuses.map((status) {
                         return DropdownMenuItem<String>(
                           value: status,
                           child: Text(_formatStatusLabel(status)),
                         );
                       }).toList(),
                       onChanged: (newStatus) {
-                        if (newStatus != null) {
+                        if (newStatus != null && newStatus != visit.status) {
                           final DateTime? checkout =
                               newStatus == 'completed' ? DateTime.now() : null;
                           context.read<VisitListBloc>().add(
@@ -191,21 +204,23 @@ class VisitDrawerContent extends StatelessWidget {
                         }
                       },
                     ),
-                    const SizedBox(height: 24),
-                    AppButton(
-                      text: 'Complete & Check Out',
-                      onPressed: () {
-                        context.read<VisitListBloc>().add(
-                              UpdateVisitStatusEvent(
-                                visitId: visit.visitId,
-                                status: 'completed',
-                                checkedOutAt: DateTime.now(),
-                              ),
-                            );
-                        onUpdateSuccess();
-                        Navigator.pop(context);
-                      },
-                    ),
+                    if (canCheckOut) ...[
+                      const SizedBox(height: 24),
+                      AppButton(
+                        text: 'Complete & Check Out',
+                        onPressed: () {
+                          context.read<VisitListBloc>().add(
+                                UpdateVisitStatusEvent(
+                                  visitId: visit.visitId,
+                                  status: 'completed',
+                                  checkedOutAt: DateTime.now(),
+                                ),
+                              );
+                          onUpdateSuccess();
+                          Navigator.pop(context);
+                        },
+                      ),
+                    ],
                   ],
                 ],
               ),
