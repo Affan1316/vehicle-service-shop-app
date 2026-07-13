@@ -1,5 +1,5 @@
 import 'package:equatable/equatable.dart';
-import '../../domain/entities/vehicle.dart';
+import '../../../vehicle/domain/entities/vehicle.dart';
 
 abstract class VehicleState extends Equatable {
   const VehicleState();

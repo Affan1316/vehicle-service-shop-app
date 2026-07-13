@@ -6,6 +6,8 @@ import '../../features/auth/presentation/pages/login_page.dart';
 import '../../features/auth/presentation/pages/register_page.dart';
 import '../../features/customer/presentation/pages/customer_list_page.dart';
 import '../../features/customer/presentation/pages/customer_hub_page.dart';
+import '../../features/vehicle/presentation/bloc/vehicle_list/vehicle_list_bloc.dart';
+import '../../features/vehicle/presentation/pages/vehicle_list_page.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import '../di/injection_container.dart';
 import '../../features/customer/presentation/bloc/customer_bloc.dart';
@@ -66,6 +68,11 @@ class AppRouter {
                   onPressed: () => context.push('/customers'),
                   child: const Text('Go to Customers Directory'),
                 ),
+                const SizedBox(height: 12),
+                ElevatedButton(
+                  onPressed: () => context.push('/vehicles'),
+                  child: const Text('Go to Vehicles Directory'),
+                ),
               ],
             ),
           ),
@@ -96,6 +103,14 @@ class AppRouter {
             child: CustomerHubPage(customerId: id),
           );
         },
+      ),
+      GoRoute(
+        name: RouteNames.vehicleListName,
+        path: RouteNames.vehicleListPath,
+        builder: (context, state) => BlocProvider<VehicleListBloc>(
+          create: (context) => sl<VehicleListBloc>(),
+          child: const VehicleListPage(),
+        ),
       ),
     ],
   );

@@ -1,17 +1,10 @@
 import 'package:get_it/get_it.dart';
 import '../../features/customer/data/datasources/customer_remote_datasource.dart';
-import '../../features/customer/data/datasources/vehicle_remote_datasource.dart';
 import '../../features/customer/data/repositories/customer_repository_impl.dart';
-import '../../features/customer/data/repositories/vehicle_repository_impl.dart';
 import '../../features/customer/domain/repositories/customer_repository.dart';
-import '../../features/customer/domain/repositories/vehicle_repository.dart';
 import '../../features/customer/domain/usecases/create_customer_usecase.dart';
 import '../../features/customer/domain/usecases/get_customer_by_id_usecase.dart';
 import '../../features/customer/domain/usecases/get_customers_usecase.dart';
-import '../../features/customer/domain/usecases/get_vehicle_by_vin_usecase.dart';
-import '../../features/customer/domain/usecases/get_vehicles_by_customer_usecase.dart';
-import '../../features/customer/domain/usecases/get_vehicles_usecase.dart';
-import '../../features/customer/domain/usecases/register_vehicle_usecase.dart';
 import '../../features/customer/domain/usecases/update_customer_usecase.dart';
 import '../../features/customer/presentation/bloc/customer_bloc.dart';
 import '../../features/customer/presentation/bloc/vehicle_bloc.dart';
@@ -23,16 +16,10 @@ void initCustomer() {
   sl.registerLazySingleton<CustomerRemoteDataSource>(
     () => CustomerRemoteDataSourceImpl(sl()),
   );
-  sl.registerLazySingleton<VehicleRemoteDataSource>(
-    () => VehicleRemoteDataSourceImpl(sl()),
-  );
 
   // Repositories
   sl.registerLazySingleton<CustomerRepository>(
     () => CustomerRepositoryImpl(sl(), sl()),
-  );
-  sl.registerLazySingleton<VehicleRepository>(
-    () => VehicleRepositoryImpl(sl(), sl()),
   );
 
   // Use Cases
@@ -40,11 +27,6 @@ void initCustomer() {
   sl.registerLazySingleton<GetCustomerByIdUseCase>(() => GetCustomerByIdUseCase(sl()));
   sl.registerLazySingleton<CreateCustomerUseCase>(() => CreateCustomerUseCase(sl()));
   sl.registerLazySingleton<UpdateCustomerUseCase>(() => UpdateCustomerUseCase(sl()));
-
-  sl.registerLazySingleton<GetVehiclesUseCase>(() => GetVehiclesUseCase(sl()));
-  sl.registerLazySingleton<GetVehicleByVinUseCase>(() => GetVehicleByVinUseCase(sl()));
-  sl.registerLazySingleton<GetVehiclesByCustomerUseCase>(() => GetVehiclesByCustomerUseCase(sl()));
-  sl.registerLazySingleton<RegisterVehicleUseCase>(() => RegisterVehicleUseCase(sl()));
 
   // BLoCs
   sl.registerFactory<CustomerBloc>(

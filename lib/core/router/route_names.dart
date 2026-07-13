@@ -15,4 +15,7 @@ class RouteNames {
 
   static const String customerHubName = 'customer-hub';
   static const String customerHubPath = '/customers/:id';
+
+  static const String vehicleListName = 'vehicles';
+  static const String vehicleListPath = '/vehicles';
 }

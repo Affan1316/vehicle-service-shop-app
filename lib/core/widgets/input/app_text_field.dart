@@ -11,6 +11,7 @@ class AppTextField extends StatelessWidget {
   final Widget? prefixIcon;
   final Widget? suffixIcon;
   final TextInputType keyboardType;
+  final ValueChanged<String>? onChanged;
 
   const AppTextField({
     required this.label,
@@ -21,6 +22,7 @@ class AppTextField extends StatelessWidget {
     this.prefixIcon,
     this.suffixIcon,
     this.keyboardType = TextInputType.text,
+    this.onChanged,
     super.key,
   });
 
@@ -31,6 +33,7 @@ class AppTextField extends StatelessWidget {
       obscureText: obscureText,
       validator: validator,
       keyboardType: keyboardType,
+      onChanged: onChanged,
       style: AppTypography.bodyLarge.copyWith(color: AppColors.textPrimary),
       decoration: InputDecoration(
         labelText: label,

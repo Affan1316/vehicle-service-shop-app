@@ -1,6 +1,6 @@
 import 'package:flutter_bloc/flutter_bloc.dart';
-import '../../domain/usecases/get_vehicles_usecase.dart';
-import '../../domain/usecases/register_vehicle_usecase.dart';
+import '../../../vehicle/domain/usecases/get_vehicles_usecase.dart';
+import '../../../vehicle/domain/usecases/register_vehicle_usecase.dart';
 import 'vehicle_event.dart';
 import 'vehicle_state.dart';
 

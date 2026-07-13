@@ -1,6 +1,6 @@
 import 'package:equatable/equatable.dart';
 import '../../domain/entities/customer.dart';
-import '../../domain/entities/vehicle.dart';
+import '../../../vehicle/domain/entities/vehicle.dart';
 import '../../domain/entities/timeline_event.dart';
 
 abstract class CustomerState extends Equatable {

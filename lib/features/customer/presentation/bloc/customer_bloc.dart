@@ -3,7 +3,7 @@ import '../../domain/entities/timeline_event.dart';
 import '../../domain/usecases/create_customer_usecase.dart';
 import '../../domain/usecases/get_customer_by_id_usecase.dart';
 import '../../domain/usecases/get_customers_usecase.dart';
-import '../../domain/usecases/get_vehicles_by_customer_usecase.dart';
+import '../../../vehicle/domain/usecases/get_vehicles_by_customer_usecase.dart';
 import '../../domain/usecases/update_customer_usecase.dart';
 import 'customer_event.dart';
 import 'customer_state.dart';
