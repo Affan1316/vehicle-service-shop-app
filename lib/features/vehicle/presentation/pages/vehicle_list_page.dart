@@ -19,6 +19,7 @@ class VehicleListPage extends StatefulWidget {
 }
 
 class _VehicleListPageState extends State<VehicleListPage> {
+  final GlobalKey<ScaffoldState> _scaffoldKey = GlobalKey<ScaffoldState>();
   final TextEditingController _searchController = TextEditingController();
   String _searchQuery = '';
   String? _selectedVin;
@@ -37,217 +38,214 @@ class _VehicleListPageState extends State<VehicleListPage> {
 
   @override
   Widget build(BuildContext context) {
-    return Builder(
-      builder: (scaffoldContext) {
-        return Scaffold(
-          backgroundColor: AppColors.bgDefault,
-          appBar: AppBar(
-            backgroundColor: AppColors.bgDefault,
-            elevation: 0,
-            leading: IconButton(
-              icon: Icon(Icons.arrow_back, color: AppColors.textPrimary),
-              onPressed: () => context.pop(),
-            ),
-            title: Text(
-              'Vehicle Directory',
-              style: AppTypography.headingLarge.copyWith(color: AppColors.textPrimary),
-            ),
-            actions: [
-              IconButton(
-                icon: Icon(Icons.refresh, color: AppColors.textPrimary),
-                onPressed: () =>
-                    context.read<VehicleListBloc>().add(const FetchVehiclesList()),
-              ),
-            ],
+    return Scaffold(
+      key: _scaffoldKey,
+      backgroundColor: AppColors.bgDefault,
+      appBar: AppBar(
+        backgroundColor: AppColors.bgDefault,
+        elevation: 0,
+        leading: IconButton(
+          icon: Icon(Icons.arrow_back, color: AppColors.textPrimary),
+          onPressed: () => context.pop(),
+        ),
+        title: Text(
+          'Vehicle Directory',
+          style: AppTypography.headingLarge.copyWith(color: AppColors.textPrimary),
+        ),
+        actions: [
+          IconButton(
+            icon: Icon(Icons.refresh, color: AppColors.textPrimary),
+            onPressed: () =>
+                context.read<VehicleListBloc>().add(const FetchVehiclesList()),
           ),
-          endDrawer: _selectedVin == null
-              ? null
-              : Drawer(
-                  backgroundColor: AppColors.bgSurface,
-                  width: MediaQuery.of(scaffoldContext).size.width >= 768
-                      ? 400
-                      : MediaQuery.of(scaffoldContext).size.width,
-                  child: BlocProvider<VehicleDetailCubit>(
-                    create: (context) => sl<VehicleDetailCubit>(),
-                    child: VehicleDrawerContent(
-                      vin: _selectedVin!,
-                      onDeleteSuccess: () {
-                        context.read<VehicleListBloc>().add(const FetchVehiclesList());
-                      },
-                      onUpdateSuccess: () {
-                        context.read<VehicleListBloc>().add(const FetchVehiclesList());
-                      },
-                    ),
-                  ),
+        ],
+      ),
+      endDrawer: _selectedVin == null
+          ? null
+          : Drawer(
+              backgroundColor: AppColors.bgSurface,
+              width: MediaQuery.of(context).size.width >= 768
+                  ? 400
+                  : MediaQuery.of(context).size.width,
+              child: BlocProvider<VehicleDetailCubit>(
+                create: (context) => sl<VehicleDetailCubit>(),
+                child: VehicleDrawerContent(
+                  vin: _selectedVin!,
+                  onDeleteSuccess: () {
+                    context.read<VehicleListBloc>().add(const FetchVehiclesList());
+                  },
+                  onUpdateSuccess: () {
+                    context.read<VehicleListBloc>().add(const FetchVehiclesList());
+                  },
                 ),
-          body: BlocConsumer<VehicleListBloc, VehicleListState>(
-            listener: (context, state) {
-              if (state is VehicleListError) {
-                ScaffoldMessenger.of(context).showSnackBar(
-                  SnackBar(
-                    content: Text(state.message),
-                    backgroundColor: AppColors.dangerBorder,
-                  ),
-                );
-              }
-            },
-            builder: (context, state) {
-              List<dynamic> vehicles = [];
-              bool isLoading = false;
+              ),
+            ),
+      body: BlocConsumer<VehicleListBloc, VehicleListState>(
+        listener: (context, state) {
+          if (state is VehicleListError) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(
+                content: Text(state.message),
+                backgroundColor: AppColors.dangerBorder,
+              ),
+            );
+          }
+        },
+        builder: (context, state) {
+          List<dynamic> vehicles = [];
+          bool isLoading = false;
 
-              if (state is VehicleListLoading) {
-                isLoading = true;
-              } else if (state is VehicleListLoaded) {
-                vehicles = state.vehicles;
-              }
+          if (state is VehicleListLoading) {
+            isLoading = true;
+          } else if (state is VehicleListLoaded) {
+            vehicles = state.vehicles;
+          }
 
-              final filteredVehicles = vehicles.where((v) {
-                final query = _searchQuery.toLowerCase();
-                return v.vin.toLowerCase().contains(query) ||
-                    v.make.toLowerCase().contains(query) ||
-                    v.model.toLowerCase().contains(query) ||
-                    v.year.toString().contains(query);
-              }).toList();
+          final filteredVehicles = vehicles.where((v) {
+            final query = _searchQuery.toLowerCase();
+            return v.vin.toLowerCase().contains(query) ||
+                v.make.toLowerCase().contains(query) ||
+                v.model.toLowerCase().contains(query) ||
+                v.year.toString().contains(query);
+          }).toList();
 
-              return Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 16.0),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    const SizedBox(height: 8),
-                    AppTextField(
-                      label: 'Search Vehicles',
-                      hint: 'Search by VIN, make, model or year...',
-                      controller: _searchController,
-                      prefixIcon: Icon(Icons.search, color: AppColors.textSecondary),
-                      suffixIcon: _searchQuery.isNotEmpty
-                          ? IconButton(
-                              icon: Icon(Icons.clear, color: AppColors.textSecondary),
-                              onPressed: () {
-                                setState(() {
-                                  _searchController.clear();
-                                  _searchQuery = '';
-                                });
-                              },
-                            )
-                          : null,
-                      validator: (value) => null,
-                      onChanged: (val) {
-                        setState(() {
-                          _searchQuery = val;
-                        });
-                      },
+          return Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 16.0),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const SizedBox(height: 8),
+                AppTextField(
+                  label: 'Search Vehicles',
+                  hint: 'Search by VIN, make, model or year...',
+                  controller: _searchController,
+                  prefixIcon: Icon(Icons.search, color: AppColors.textSecondary),
+                  suffixIcon: _searchQuery.isNotEmpty
+                      ? IconButton(
+                          icon: Icon(Icons.clear, color: AppColors.textSecondary),
+                          onPressed: () {
+                            setState(() {
+                              _searchController.clear();
+                              _searchQuery = '';
+                            });
+                          },
+                        )
+                      : null,
+                  validator: (value) => null,
+                  onChanged: (val) {
+                    setState(() {
+                      _searchQuery = val;
+                    });
+                  },
+                ),
+                const SizedBox(height: 16),
+                if (isLoading)
+                  const Expanded(
+                    child: Center(
+                      child: CircularProgressIndicator(color: AppColors.primary),
                     ),
-                    const SizedBox(height: 16),
-                    if (isLoading)
-                      const Expanded(
-                        child: Center(
-                          child: CircularProgressIndicator(color: AppColors.primary),
-                        ),
-                      )
-                    else if (filteredVehicles.isEmpty)
-                      Expanded(
-                        child: Center(
-                          child: Text(
-                            'No vehicles found in inventory',
-                            style: AppTypography.bodyLarge.copyWith(color: AppColors.textSecondary),
-                          ),
-                        ),
-                      )
-                    else
-                      Expanded(
-                        child: ListView.builder(
-                          itemCount: filteredVehicles.length,
-                          itemBuilder: (context, index) {
-                            final vehicle = filteredVehicles[index];
+                  )
+                else if (filteredVehicles.isEmpty)
+                  Expanded(
+                    child: Center(
+                      child: Text(
+                        'No vehicles found in inventory',
+                        style: AppTypography.bodyLarge.copyWith(color: AppColors.textSecondary),
+                      ),
+                    ),
+                  )
+                else
+                  Expanded(
+                    child: ListView.builder(
+                      itemCount: filteredVehicles.length,
+                      itemBuilder: (context, index) {
+                        final vehicle = filteredVehicles[index];
 
-                            return Container(
-                              margin: const EdgeInsets.only(bottom: 12),
-                              decoration: BoxDecoration(
-                                color: AppColors.bgSurface,
-                                borderRadius: BorderRadius.circular(8),
-                                border: Border.all(color: AppColors.borderDefault),
-                              ),
-                              child: InkWell(
-                                borderRadius: BorderRadius.circular(8),
-                                onTap: () {
-                                  setState(() => _selectedVin = vehicle.vin);
-                                  Scaffold.of(scaffoldContext).openEndDrawer();
-                                },
-                                child: Padding(
-                                  padding: const EdgeInsets.all(16.0),
-                                  child: Row(
-                                    children: [
-                                      Icon(Icons.directions_car,
-                                          color: AppColors.primary, size: 28),
-                                      const SizedBox(width: 16),
-                                      Expanded(
-                                        child: Column(
-                                          crossAxisAlignment: CrossAxisAlignment.start,
-                                          children: [
-                                            Text(
-                                              '${vehicle.year} ${vehicle.make} ${vehicle.model}',
-                                              style: AppTypography.headingSmall
-                                                  .copyWith(color: AppColors.textPrimary),
-                                            ),
-                                            const SizedBox(height: 6),
-                                            Text(
-                                              'VIN: ${vehicle.vin}',
-                                              style: AppTypography.monospace.copyWith(
-                                                color: AppColors.textSecondary,
-                                                fontWeight: FontWeight.bold,
-                                              ),
-                                            ),
-                                          ],
+                        return Container(
+                          margin: const EdgeInsets.only(bottom: 12),
+                          decoration: BoxDecoration(
+                            color: AppColors.bgSurface,
+                            borderRadius: BorderRadius.circular(8),
+                            border: Border.all(color: AppColors.borderDefault),
+                          ),
+                          child: InkWell(
+                            borderRadius: BorderRadius.circular(8),
+                            onTap: () {
+                              setState(() => _selectedVin = vehicle.vin);
+                              _scaffoldKey.currentState?.openEndDrawer();
+                            },
+                            child: Padding(
+                              padding: const EdgeInsets.all(16.0),
+                              child: Row(
+                                children: [
+                                  Icon(Icons.directions_car,
+                                      color: AppColors.primary, size: 28),
+                                  const SizedBox(width: 16),
+                                  Expanded(
+                                    child: Column(
+                                      crossAxisAlignment: CrossAxisAlignment.start,
+                                      children: [
+                                        Text(
+                                          '${vehicle.year} ${vehicle.make} ${vehicle.model}',
+                                          style: AppTypography.headingSmall
+                                              .copyWith(color: AppColors.textPrimary),
                                         ),
-                                      ),
-                                      const SizedBox(width: 8),
-                                      Column(
-                                        crossAxisAlignment: CrossAxisAlignment.end,
-                                        children: [
-                                          Text(
-                                            '${vehicle.currentMileage.toString().replaceAllMapped(RegExp(r'(\d{1,3})(?=(\d{3})+(?!\d))'), (Match m) => '${m[1]},')} mi',
-                                            style: AppTypography.bodyLarge
-                                                .copyWith(color: AppColors.textPrimary),
+                                        const SizedBox(height: 6),
+                                        Text(
+                                          'VIN: ${vehicle.vin}',
+                                          style: AppTypography.monospace.copyWith(
+                                            color: AppColors.textSecondary,
+                                            fontWeight: FontWeight.bold,
                                           ),
-                                          const SizedBox(height: 4),
-                                          Container(
-                                            padding: const EdgeInsets.symmetric(
-                                                horizontal: 6, vertical: 2),
-                                            decoration: BoxDecoration(
-                                              color: AppColors.successBg,
-                                              borderRadius: BorderRadius.circular(4),
-                                            ),
-                                            child: Text(
-                                              'ACTIVE',
-                                              style: AppTypography.bodySmall.copyWith(
-                                                color: AppColors.successText,
-                                                fontWeight: FontWeight.bold,
-                                              ),
-                                            ),
-                                          ),
-                                        ],
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                                  const SizedBox(width: 8),
+                                  Column(
+                                    crossAxisAlignment: CrossAxisAlignment.end,
+                                    children: [
+                                      Text(
+                                        '${vehicle.currentMileage.toString().replaceAllMapped(RegExp(r'(\d{1,3})(?=(\d{3})+(?!\d))'), (Match m) => '${m[1]},')} mi',
+                                        style: AppTypography.bodyLarge
+                                            .copyWith(color: AppColors.textPrimary),
                                       ),
-                                      const SizedBox(width: 8),
-                                      Icon(
-                                        Icons.chevron_right,
-                                        color: AppColors.textSecondary,
+                                      const SizedBox(height: 4),
+                                      Container(
+                                        padding: const EdgeInsets.symmetric(
+                                            horizontal: 6, vertical: 2),
+                                        decoration: BoxDecoration(
+                                          color: AppColors.successBg,
+                                          borderRadius: BorderRadius.circular(4),
+                                        ),
+                                        child: Text(
+                                          'ACTIVE',
+                                          style: AppTypography.bodySmall.copyWith(
+                                            color: AppColors.successText,
+                                            fontWeight: FontWeight.bold,
+                                          ),
+                                        ),
                                       ),
                                     ],
                                   ),
-                                ),
+                                  const SizedBox(width: 8),
+                                  Icon(
+                                    Icons.chevron_right,
+                                    color: AppColors.textSecondary,
+                                  ),
+                                ],
                               ),
-                            );
-                          },
-                        ),
-                      ),
-                  ],
-                ),
-              );
-            },
-          ),
-        );
-      },
+                            ),
+                          ),
+                        );
+                      },
+                    ),
+                  ),
+              ],
+            ),
+          );
+        },
+      ),
     );
   }
 }
