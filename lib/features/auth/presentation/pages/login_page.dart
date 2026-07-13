@@ -2,6 +2,7 @@ import 'dart:math' as math;
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
+import 'package:lucide_icons_flutter/lucide_icons.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_spacing.dart';
 import '../../../../core/theme/app_typography.dart';
@@ -140,7 +141,7 @@ class _LoginPageState extends State<LoginPage> with SingleTickerProviderStateMix
               },
             ),
             const Icon(
-              Icons.speed_outlined,
+              LucideIcons.gauge,
               size: 44,
               color: AppColors.primary,
             ),
@@ -206,7 +207,7 @@ class _LoginPageState extends State<LoginPage> with SingleTickerProviderStateMix
             focusNode: _usernameFocus,
             label: 'USERNAME',
             hint: 'Enter your username',
-            icon: Icons.person_outline,
+            icon: LucideIcons.user,
             validator: (val) => (val == null || val.trim().isEmpty) ? 'Username required' : null,
             enabled: !isLoading,
           ),
@@ -216,7 +217,7 @@ class _LoginPageState extends State<LoginPage> with SingleTickerProviderStateMix
             focusNode: _passwordFocus,
             label: 'PASSWORD',
             hint: '••••••••',
-            icon: Icons.lock_outline,
+            icon: LucideIcons.lock,
             obscure: true,
             validator: (val) => (val == null || val.trim().isEmpty) ? 'Password required' : null,
             enabled: !isLoading,

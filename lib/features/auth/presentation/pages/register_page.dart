@@ -2,6 +2,7 @@ import 'dart:math' as math;
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
+import 'package:lucide_icons_flutter/lucide_icons.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_spacing.dart';
 import '../../../../core/theme/app_typography.dart';
@@ -73,7 +74,7 @@ class _RegisterPageState extends State<RegisterPage> with SingleTickerProviderSt
         backgroundColor: Colors.transparent,
         elevation: 0,
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back, color: AppColors.textPrimary),
+          icon: const Icon(LucideIcons.arrowLeft, color: AppColors.textPrimary),
           onPressed: () => context.pop(),
         ),
       ),
@@ -165,12 +166,12 @@ class _RegisterPageState extends State<RegisterPage> with SingleTickerProviderSt
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          _buildSleekInput(
+           _buildSleekInput(
             controller: _usernameController,
             focusNode: _usernameFocus,
             label: 'USERNAME',
             hint: 'Choose a profile username',
-            icon: Icons.person_outline,
+            icon: LucideIcons.user,
             validator: (val) => (val == null || val.trim().isEmpty) ? 'Username required' : null,
             enabled: !isLoading,
           ),
@@ -180,7 +181,7 @@ class _RegisterPageState extends State<RegisterPage> with SingleTickerProviderSt
             focusNode: _emailFocus,
             label: 'EMAIL ADDRESS',
             hint: 'user@wheelsdoc.com',
-            icon: Icons.mail_outline,
+            icon: LucideIcons.mail,
             keyboardType: TextInputType.emailAddress,
             validator: (val) {
               if (val == null || val.trim().isEmpty) return 'Email required';
@@ -195,7 +196,7 @@ class _RegisterPageState extends State<RegisterPage> with SingleTickerProviderSt
             focusNode: _passwordFocus,
             label: 'PASSWORD',
             hint: '••••••••',
-            icon: Icons.lock_outline,
+            icon: LucideIcons.lock,
             obscure: true,
             validator: (val) {
               if (val == null || val.trim().isEmpty) return 'Password required';

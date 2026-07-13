@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
+import 'package:lucide_icons_flutter/lucide_icons.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_typography.dart';
 import '../../../../core/widgets/input/app_text_field.dart';
@@ -157,7 +158,7 @@ class _CustomerListPageState extends State<CustomerListPage> {
         ),
         actions: [
           IconButton(
-            icon: Icon(Icons.refresh, color: AppColors.textPrimary),
+            icon: Icon(LucideIcons.refreshCw, color: AppColors.textPrimary),
             onPressed: () => context.read<CustomerBloc>().add(const FetchCustomers()),
           ),
         ],
@@ -165,7 +166,7 @@ class _CustomerListPageState extends State<CustomerListPage> {
       floatingActionButton: FloatingActionButton(
         backgroundColor: AppColors.primary,
         onPressed: _showCreateCustomerDialog,
-        child: const Icon(Icons.add, color: AppColors.textPrimary),
+        child: const Icon(LucideIcons.plus, color: AppColors.textPrimary),
       ),
       body: BlocConsumer<CustomerBloc, CustomerState>(
         listener: (context, state) {
@@ -205,10 +206,10 @@ class _CustomerListPageState extends State<CustomerListPage> {
                   label: 'Search Directory',
                   hint: 'Type customer name to search...',
                   controller: _searchController,
-                  prefixIcon: Icon(Icons.search, color: AppColors.textSecondary),
+                  prefixIcon: Icon(LucideIcons.search, color: AppColors.textSecondary),
                   suffixIcon: _searchQuery.isNotEmpty
                       ? IconButton(
-                          icon: Icon(Icons.clear, color: AppColors.textSecondary),
+                          icon: Icon(LucideIcons.x, color: AppColors.textSecondary),
                           onPressed: () {
                             setState(() {
                               _searchController.clear();
@@ -325,7 +326,7 @@ class _CustomerListPageState extends State<CustomerListPage> {
                                   ),
                                   const SizedBox(width: 8),
                                   Icon(
-                                    Icons.chevron_right,
+                                    LucideIcons.chevronRight,
                                     color: AppColors.textSecondary,
                                   ),
                                 ],

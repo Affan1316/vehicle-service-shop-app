@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:lucide_icons_flutter/lucide_icons.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_typography.dart';
 import '../../../../core/widgets/input/app_button.dart';
@@ -106,7 +107,7 @@ class VisitDrawerContent extends StatelessWidget {
                 style: AppTypography.headingMedium.copyWith(color: AppColors.textPrimary),
               ),
               IconButton(
-                icon: Icon(Icons.close, color: AppColors.textSecondary),
+                icon: Icon(LucideIcons.x, color: AppColors.textSecondary),
                 onPressed: () => Navigator.pop(context),
               ),
             ],

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
+import 'package:lucide_icons_flutter/lucide_icons.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_typography.dart';
 import '../../../../core/widgets/input/app_button.dart';
@@ -174,15 +175,15 @@ class _CustomerHubPageState extends State<CustomerHubPage> {
   IconData _getTimelineIcon(String type) {
     switch (type) {
       case 'payment':
-        return Icons.attach_money;
+        return LucideIcons.dollarSign;
       case 'work_order':
-        return Icons.build;
+        return LucideIcons.wrench;
       case 'check_in':
-        return Icons.login;
+        return LucideIcons.logIn;
       case 'quote':
-        return Icons.description;
+        return LucideIcons.fileText;
       default:
-        return Icons.event;
+        return LucideIcons.calendar;
     }
   }
 
@@ -194,7 +195,7 @@ class _CustomerHubPageState extends State<CustomerHubPage> {
         backgroundColor: AppColors.bgDefault,
         elevation: 0,
         leading: IconButton(
-          icon: Icon(Icons.arrow_back, color: AppColors.textPrimary),
+          icon: Icon(LucideIcons.arrowLeft, color: AppColors.textPrimary),
           onPressed: () => context.pop(),
         ),
         title: Text(
@@ -357,7 +358,7 @@ class _CustomerHubPageState extends State<CustomerHubPage> {
                                 children: [
                                   Row(
                                     children: [
-                                      Icon(Icons.directions_car, color: AppColors.primary),
+                                      Icon(LucideIcons.car, color: AppColors.primary),
                                       const SizedBox(width: 8),
                                       Expanded(
                                         child: Text(

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
+import 'package:lucide_icons_flutter/lucide_icons.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_typography.dart';
 import '../../../auth/presentation/bloc/auth_bloc.dart';
@@ -146,7 +147,7 @@ class _DashboardPageState extends State<DashboardPage> {
                 ),
                 child: Center(
                   child: Icon(
-                    Icons.directions_car_filled,
+                    LucideIcons.car,
                     color: AppColors.primary,
                     size: 24,
                   ),
@@ -196,7 +197,7 @@ class _DashboardPageState extends State<DashboardPage> {
               ),
               IconButton(
                 onPressed: _handleLogout,
-                icon: const Icon(Icons.logout, color: AppColors.dangerText),
+                icon: const Icon(LucideIcons.logOut, color: AppColors.dangerText),
                 tooltip: 'Sign Out',
               ),
             ],
@@ -257,25 +258,25 @@ class _DashboardPageState extends State<DashboardPage> {
                     _buildStatCard(
                       'ACTIVE CHECK-INS',
                       activeVisitsCount,
-                      Icons.pending_actions,
+                      LucideIcons.clipboardClock,
                       AppColors.primary,
                     ),
                     _buildStatCard(
                       'CUSTOMERS',
                       customerCount,
-                      Icons.people,
+                      LucideIcons.users,
                       AppColors.infoBorder,
                     ),
                     _buildStatCard(
                       'VEHICLE FLEET',
                       vehicleCount,
-                      Icons.directions_car,
+                      LucideIcons.car,
                       AppColors.successBorder,
                     ),
                     _buildStatCard(
                       'TODAY\'S REVENUE',
                       '\$4,850',
-                      Icons.monetization_on,
+                      LucideIcons.circleDollarSign,
                       Colors.purpleAccent,
                       isComingSoon: true,
                     ),
@@ -382,19 +383,19 @@ class _DashboardPageState extends State<DashboardPage> {
             _buildShortcutCard(
               'Customers Directory',
               'Manage profiles and bills',
-              Icons.people_outline,
+              LucideIcons.users,
               () => context.push('/customers'),
             ),
             _buildShortcutCard(
               'Vehicles Directory',
               'Lookup specs and records',
-              Icons.directions_car_outlined,
+              LucideIcons.car,
               () => context.push('/vehicles'),
             ),
             _buildShortcutCard(
               'Service Visits',
               'Active floor check-ins',
-              Icons.assignment_outlined,
+              LucideIcons.clipboard,
               () => context.push('/visits'),
             ),
           ],
@@ -444,7 +445,7 @@ class _DashboardPageState extends State<DashboardPage> {
                 ],
               ),
             ),
-            Icon(Icons.chevron_right, color: AppColors.textSecondary),
+            Icon(LucideIcons.chevronRight, color: AppColors.textSecondary),
           ],
         ),
       ),
@@ -517,7 +518,7 @@ class _DashboardPageState extends State<DashboardPage> {
                     child: Column(
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
-                        Icon(Icons.done_all, color: AppColors.successText, size: 36),
+                        Icon(LucideIcons.checkCheck, color: AppColors.successText, size: 36),
                         const SizedBox(height: 12),
                         Text(
                           'No vehicles checked in.',
@@ -643,19 +644,19 @@ class _DashboardPageState extends State<DashboardPage> {
         _buildPlaceholderModule(
           'Service Jobs Dispatch',
           'Track technician assignments, diagnostic logs, and job status counters.',
-          Icons.engineering_outlined,
+          LucideIcons.wrench,
         ),
         const SizedBox(height: 16),
         _buildPlaceholderModule(
           'Shop Bay Manager',
           'Allocate physical service bays, map Gantt repair schedules, and minimize queue delays.',
-          Icons.calendar_today_outlined,
+          LucideIcons.calendar,
         ),
         const SizedBox(height: 16),
         _buildPlaceholderModule(
           'Billing & Payment Disputes',
           'Generate parts/labor invoices, record deposits, and process customer credit refunds.',
-          Icons.receipt_long_outlined,
+          LucideIcons.receipt,
         ),
       ],
     );

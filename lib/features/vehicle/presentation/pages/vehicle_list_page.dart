@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
+import 'package:lucide_icons_flutter/lucide_icons.dart';
 import '../../../../core/di/injection_container.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_typography.dart';
@@ -45,7 +46,7 @@ class _VehicleListPageState extends State<VehicleListPage> {
         backgroundColor: AppColors.bgDefault,
         elevation: 0,
         leading: IconButton(
-          icon: Icon(Icons.arrow_back, color: AppColors.textPrimary),
+          icon: Icon(LucideIcons.arrowLeft, color: AppColors.textPrimary),
           onPressed: () => context.pop(),
         ),
         title: Text(
@@ -54,7 +55,7 @@ class _VehicleListPageState extends State<VehicleListPage> {
         ),
         actions: [
           IconButton(
-            icon: Icon(Icons.refresh, color: AppColors.textPrimary),
+            icon: Icon(LucideIcons.refreshCw, color: AppColors.textPrimary),
             onPressed: () =>
                 context.read<VehicleListBloc>().add(const FetchVehiclesList()),
           ),
@@ -119,10 +120,10 @@ class _VehicleListPageState extends State<VehicleListPage> {
                   label: 'Search Vehicles',
                   hint: 'Search by VIN, make, model or year...',
                   controller: _searchController,
-                  prefixIcon: Icon(Icons.search, color: AppColors.textSecondary),
+                  prefixIcon: Icon(LucideIcons.search, color: AppColors.textSecondary),
                   suffixIcon: _searchQuery.isNotEmpty
                       ? IconButton(
-                          icon: Icon(Icons.clear, color: AppColors.textSecondary),
+                          icon: Icon(LucideIcons.x, color: AppColors.textSecondary),
                           onPressed: () {
                             setState(() {
                               _searchController.clear();
@@ -178,7 +179,7 @@ class _VehicleListPageState extends State<VehicleListPage> {
                               padding: const EdgeInsets.all(16.0),
                               child: Row(
                                 children: [
-                                  Icon(Icons.directions_car,
+                                  Icon(LucideIcons.car,
                                       color: AppColors.primary, size: 28),
                                   const SizedBox(width: 16),
                                   Expanded(
@@ -230,7 +231,7 @@ class _VehicleListPageState extends State<VehicleListPage> {
                                   ),
                                   const SizedBox(width: 8),
                                   Icon(
-                                    Icons.chevron_right,
+                                    LucideIcons.chevronRight,
                                     color: AppColors.textSecondary,
                                   ),
                                 ],

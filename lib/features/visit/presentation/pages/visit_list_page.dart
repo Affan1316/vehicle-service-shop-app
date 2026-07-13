@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
+import 'package:lucide_icons_flutter/lucide_icons.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_typography.dart';
 import '../../../../core/widgets/input/app_text_field.dart';
@@ -76,7 +77,7 @@ class _VisitListPageState extends State<VisitListPage> {
         backgroundColor: AppColors.bgDefault,
         elevation: 0,
         leading: IconButton(
-          icon: Icon(Icons.arrow_back, color: AppColors.textPrimary),
+          icon: Icon(LucideIcons.arrowLeft, color: AppColors.textPrimary),
           onPressed: () => context.pop(),
         ),
         title: Text(
@@ -85,7 +86,7 @@ class _VisitListPageState extends State<VisitListPage> {
         ),
         actions: [
           IconButton(
-            icon: Icon(Icons.refresh, color: AppColors.textPrimary),
+            icon: Icon(LucideIcons.refreshCw, color: AppColors.textPrimary),
             onPressed: () =>
                 context.read<VisitListBloc>().add(const FetchVisitsList()),
           ),
@@ -94,7 +95,7 @@ class _VisitListPageState extends State<VisitListPage> {
       floatingActionButton: isAdvisor
           ? FloatingActionButton.extended(
               backgroundColor: AppColors.primary,
-              icon: Icon(Icons.add, color: AppColors.textPrimary),
+              icon: Icon(LucideIcons.plus, color: AppColors.textPrimary),
               label: Text(
                 'Check In',
                 style: TextStyle(color: AppColors.textPrimary, fontWeight: FontWeight.bold),
@@ -182,10 +183,10 @@ class _VisitListPageState extends State<VisitListPage> {
                   label: 'Search Visits',
                   hint: 'Search by customer, vehicle or VIN...',
                   controller: _searchController,
-                  prefixIcon: Icon(Icons.search, color: AppColors.textSecondary),
+                  prefixIcon: Icon(LucideIcons.search, color: AppColors.textSecondary),
                   suffixIcon: _searchQuery.isNotEmpty
                       ? IconButton(
-                          icon: Icon(Icons.clear, color: AppColors.textSecondary),
+                          icon: Icon(LucideIcons.x, color: AppColors.textSecondary),
                           onPressed: () {
                             setState(() {
                               _searchController.clear();
@@ -251,7 +252,7 @@ class _VisitListPageState extends State<VisitListPage> {
                               padding: const EdgeInsets.all(16.0),
                               child: Row(
                                 children: [
-                                  Icon(Icons.garage,
+                                  Icon(LucideIcons.car,
                                       color: _getStatusColor(visit.status), size: 28),
                                   const SizedBox(width: 16),
                                   Expanded(
@@ -303,7 +304,7 @@ class _VisitListPageState extends State<VisitListPage> {
                                   ),
                                   const SizedBox(width: 8),
                                   Icon(
-                                    Icons.chevron_right,
+                                    LucideIcons.chevronRight,
                                     color: AppColors.textSecondary,
                                   ),
                                 ],

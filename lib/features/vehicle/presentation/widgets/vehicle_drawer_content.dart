@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
+import 'package:lucide_icons_flutter/lucide_icons.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_typography.dart';
 import '../../../../core/widgets/input/app_button.dart';
@@ -124,7 +125,7 @@ class _VehicleDrawerContentState extends State<VehicleDrawerContent> {
                         style: AppTypography.headingMedium.copyWith(color: AppColors.textPrimary),
                       ),
                       IconButton(
-                        icon: Icon(Icons.close, color: AppColors.textSecondary),
+                        icon: Icon(LucideIcons.x, color: AppColors.textSecondary),
                         onPressed: () => Navigator.pop(context),
                       ),
                     ],
@@ -255,7 +256,7 @@ class _VehicleDrawerContentState extends State<VehicleDrawerContent> {
                                     padding: const EdgeInsets.symmetric(vertical: 4.0),
                                     child: Row(
                                       children: [
-                                        Icon(Icons.person, color: AppColors.primary, size: 20),
+                                        Icon(LucideIcons.user, color: AppColors.primary, size: 20),
                                         const SizedBox(width: 8),
                                         Expanded(
                                           child: Text(
@@ -267,7 +268,7 @@ class _VehicleDrawerContentState extends State<VehicleDrawerContent> {
                                           ),
                                         ),
                                         Icon(
-                                          Icons.chevron_right,
+                                          LucideIcons.chevronRight,
                                           color: AppColors.primary,
                                           size: 20,
                                         ),
