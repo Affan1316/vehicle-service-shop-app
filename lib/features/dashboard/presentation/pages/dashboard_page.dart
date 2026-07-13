@@ -70,6 +70,8 @@ class _DashboardPageState extends State<DashboardPage> {
         return AppColors.primary;
       case 'technician':
         return Colors.orangeAccent;
+      case 'customer':
+        return Colors.tealAccent;
       default:
         return AppColors.textSecondary;
     }
@@ -83,6 +85,8 @@ class _DashboardPageState extends State<DashboardPage> {
         return 'SERVICE ADVISOR';
       case 'technician':
         return 'SERVICE TECHNICIAN';
+      case 'customer':
+        return 'CLIENT';
       default:
         return role.toUpperCase();
     }
@@ -106,6 +110,7 @@ class _DashboardPageState extends State<DashboardPage> {
 
             return RefreshIndicator(
               onRefresh: () async {
+                if (role == 'customer') return;
                 context.read<CustomerBloc>().add(FetchCustomers());
                 context.read<VehicleListBloc>().add(const FetchVehiclesList());
                 context.read<VisitListBloc>().add(FetchVisitsList());
@@ -120,23 +125,27 @@ class _DashboardPageState extends State<DashboardPage> {
                   children: [
                     _buildHeader(context),
                     const SizedBox(height: 32),
-                    _buildStatsGrid(isDesktop, isTablet, role),
-                    const SizedBox(height: 32),
-                    _buildShortcutsSection(isDesktop, isTablet, role),
-                    const SizedBox(height: 32),
-                    if (isDesktop)
-                      Row(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Expanded(flex: 3, child: _buildLiveMonitorSection()),
-                          const SizedBox(width: 24),
-                          Expanded(flex: 2, child: _buildComingSoonSidebar(role)),
-                        ],
-                      )
+                    if (role == 'customer')
+                      _buildCustomerPlaceholder(context)
                     else ...[
-                      _buildLiveMonitorSection(),
+                      _buildStatsGrid(isDesktop, isTablet, role),
                       const SizedBox(height: 32),
-                      _buildComingSoonSidebar(role),
+                      _buildShortcutsSection(isDesktop, isTablet, role),
+                      const SizedBox(height: 32),
+                      if (isDesktop)
+                        Row(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Expanded(flex: 3, child: _buildLiveMonitorSection()),
+                            const SizedBox(width: 24),
+                            Expanded(flex: 2, child: _buildComingSoonSidebar(role)),
+                          ],
+                        )
+                      else ...[
+                        _buildLiveMonitorSection(),
+                        const SizedBox(height: 32),
+                        _buildComingSoonSidebar(role),
+                      ],
                     ],
                   ],
                 ),
@@ -919,6 +928,70 @@ class _DashboardPageState extends State<DashboardPage> {
             ),
           ),
         ],
+      ),
+    );
+  }
+
+  Widget _buildCustomerPlaceholder(BuildContext context) {
+    return Center(
+      child: Container(
+        constraints: const BoxConstraints(maxWidth: 600),
+        padding: const EdgeInsets.all(32),
+        decoration: BoxDecoration(
+          color: AppColors.bgSurface,
+          borderRadius: BorderRadius.circular(16),
+          border: Border.all(color: AppColors.borderDefault, width: 1.5),
+        ),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Container(
+              padding: const EdgeInsets.all(16),
+              decoration: BoxDecoration(
+                color: AppColors.primary.withValues(alpha: 0.1),
+                shape: BoxShape.circle,
+              ),
+              child: const Icon(
+                LucideIcons.wrench,
+                color: AppColors.primary,
+                size: 40,
+              ),
+            ),
+            const SizedBox(height: 24),
+            Text(
+              'Customer Portal Coming Soon',
+              style: AppTypography.headingLarge.copyWith(color: AppColors.textPrimary),
+              textAlign: TextAlign.center,
+            ),
+            const SizedBox(height: 16),
+            Text(
+              'Your customer self-service hub is currently under active development.\n\n'
+              'Once released, you will be able to track live vehicle service status, approve quote estimates, view maintenance history logs, and process invoices directly from this portal.',
+              style: AppTypography.bodyLarge.copyWith(height: 1.5),
+              textAlign: TextAlign.center,
+            ),
+            const SizedBox(height: 32),
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+              decoration: BoxDecoration(
+                color: AppColors.bgElevated,
+                borderRadius: BorderRadius.circular(8),
+                border: Border.all(color: AppColors.borderDefault),
+              ),
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  const Icon(LucideIcons.info, color: AppColors.textSecondary, size: 16),
+                  const SizedBox(width: 8),
+                  Text(
+                    'Need assistance? Contact shop administration.',
+                    style: AppTypography.bodySmall.copyWith(color: AppColors.textSecondary),
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }
