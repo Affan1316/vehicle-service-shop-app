@@ -62,6 +62,32 @@ class _DashboardPageState extends State<DashboardPage> {
     }
   }
 
+  Color _getRoleColor(String role) {
+    switch (role) {
+      case 'manager':
+        return Colors.redAccent;
+      case 'advisor':
+        return AppColors.primary;
+      case 'technician':
+        return Colors.orangeAccent;
+      default:
+        return AppColors.textSecondary;
+    }
+  }
+
+  String _getRoleLabel(String role) {
+    switch (role) {
+      case 'manager':
+        return 'SHOP MANAGER';
+      case 'advisor':
+        return 'SERVICE ADVISOR';
+      case 'technician':
+        return 'SERVICE TECHNICIAN';
+      default:
+        return role.toUpperCase();
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final screenWidth = MediaQuery.of(context).size.width;
@@ -71,43 +97,52 @@ class _DashboardPageState extends State<DashboardPage> {
     return Scaffold(
       backgroundColor: AppColors.bgDefault,
       body: SafeArea(
-        child: RefreshIndicator(
-          onRefresh: () async {
-            context.read<CustomerBloc>().add(FetchCustomers());
-            context.read<VehicleListBloc>().add(const FetchVehiclesList());
-            context.read<VisitListBloc>().add(FetchVisitsList());
-          },
-          color: AppColors.primary,
-          backgroundColor: AppColors.bgSurface,
-          child: SingleChildScrollView(
-            physics: const AlwaysScrollableScrollPhysics(),
-            padding: const EdgeInsets.all(24.0),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                _buildHeader(context),
-                const SizedBox(height: 32),
-                _buildStatsGrid(isDesktop, isTablet),
-                const SizedBox(height: 32),
-                _buildShortcutsSection(isDesktop, isTablet),
-                const SizedBox(height: 32),
-                if (isDesktop)
-                  Row(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Expanded(flex: 3, child: _buildLiveMonitorSection()),
-                      const SizedBox(width: 24),
-                      Expanded(flex: 2, child: _buildComingSoonSidebar()),
+        child: BlocBuilder<AuthBloc, AuthState>(
+          builder: (context, authState) {
+            String role = 'viewer';
+            if (authState is Authenticated) {
+              role = authState.user.role;
+            }
+
+            return RefreshIndicator(
+              onRefresh: () async {
+                context.read<CustomerBloc>().add(FetchCustomers());
+                context.read<VehicleListBloc>().add(const FetchVehiclesList());
+                context.read<VisitListBloc>().add(FetchVisitsList());
+              },
+              color: AppColors.primary,
+              backgroundColor: AppColors.bgSurface,
+              child: SingleChildScrollView(
+                physics: const AlwaysScrollableScrollPhysics(),
+                padding: const EdgeInsets.all(24.0),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    _buildHeader(context),
+                    const SizedBox(height: 32),
+                    _buildStatsGrid(isDesktop, isTablet, role),
+                    const SizedBox(height: 32),
+                    _buildShortcutsSection(isDesktop, isTablet, role),
+                    const SizedBox(height: 32),
+                    if (isDesktop)
+                      Row(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Expanded(flex: 3, child: _buildLiveMonitorSection()),
+                          const SizedBox(width: 24),
+                          Expanded(flex: 2, child: _buildComingSoonSidebar(role)),
+                        ],
+                      )
+                    else ...[
+                      _buildLiveMonitorSection(),
+                      const SizedBox(height: 32),
+                      _buildComingSoonSidebar(role),
                     ],
-                  )
-                else ...[
-                  _buildLiveMonitorSection(),
-                  const SizedBox(height: 32),
-                  _buildComingSoonSidebar(),
-                ],
-              ],
-            ),
-          ),
+                  ],
+                ),
+              ),
+            );
+          },
         ),
       ),
     );
@@ -123,14 +158,17 @@ class _DashboardPageState extends State<DashboardPage> {
           role = state.user.role;
         }
 
+        final roleColor = _getRoleColor(role);
+        final roleLabel = _getRoleLabel(role);
+
         return Container(
           padding: const EdgeInsets.all(20),
           decoration: BoxDecoration(
             color: AppColors.bgSurface,
             borderRadius: BorderRadius.circular(12),
-            border: Border.all(color: AppColors.borderDefault),
+            border: Border.all(color: roleColor.withValues(alpha: 0.5), width: 1.5),
             gradient: LinearGradient(
-              colors: [AppColors.bgSurface, AppColors.bgElevated.withOpacity(0.5)],
+              colors: [AppColors.bgSurface, AppColors.bgElevated.withValues(alpha: 0.5)],
               begin: Alignment.topLeft,
               end: Alignment.bottomRight,
             ),
@@ -141,14 +179,14 @@ class _DashboardPageState extends State<DashboardPage> {
                 width: 48,
                 height: 48,
                 decoration: BoxDecoration(
-                  color: AppColors.primary.withOpacity(0.15),
+                  color: roleColor.withValues(alpha: 0.15),
                   shape: BoxShape.circle,
-                  border: Border.all(color: AppColors.primary.withOpacity(0.5), width: 1.5),
+                  border: Border.all(color: roleColor.withValues(alpha: 0.5), width: 1.5),
                 ),
                 child: Center(
                   child: Icon(
                     LucideIcons.car,
-                    color: AppColors.primary,
+                    color: roleColor,
                     size: 24,
                   ),
                 ),
@@ -168,14 +206,14 @@ class _DashboardPageState extends State<DashboardPage> {
                         Container(
                           padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
                           decoration: BoxDecoration(
-                            color: AppColors.infoBg,
+                            color: roleColor.withValues(alpha: 0.15),
                             borderRadius: BorderRadius.circular(4),
-                            border: Border.all(color: AppColors.infoBorder, width: 0.5),
+                            border: Border.all(color: roleColor.withValues(alpha: 0.5), width: 0.5),
                           ),
                           child: Text(
-                            role.toUpperCase(),
+                            roleLabel,
                             style: AppTypography.bodySmall.copyWith(
-                              color: AppColors.infoText,
+                              color: roleColor,
                               fontWeight: FontWeight.bold,
                               fontSize: 10,
                             ),
@@ -207,7 +245,7 @@ class _DashboardPageState extends State<DashboardPage> {
     );
   }
 
-  Widget _buildStatsGrid(bool isDesktop, bool isTablet) {
+  Widget _buildStatsGrid(bool isDesktop, bool isTablet, String role) {
     int crossAxisCount = 1;
     if (isDesktop) {
       crossAxisCount = 4;
@@ -221,40 +259,104 @@ class _DashboardPageState extends State<DashboardPage> {
           builder: (context, vehState) {
             return BlocBuilder<VisitListBloc, VisitListState>(
               builder: (context, visitState) {
-                // Determine active visits
+                // Determine counts
                 String activeVisitsCount = '...';
+                int activeCountInt = 0;
+                int diagnosisCountInt = 0;
+                int serviceCountInt = 0;
+                int awaitingPickupCountInt = 0;
+
                 if (visitState is VisitListLoaded) {
                   final active = visitState.visits
                       .where((v) => v.status != 'completed' && v.checkedOutAt == null);
                   activeVisitsCount = active.length.toString();
-                } else if (visitState is VisitListError) {
-                  activeVisitsCount = 'Err';
+                  activeCountInt = active.length;
+
+                  diagnosisCountInt = visitState.visits
+                      .where((v) => v.status == 'in_diagnosis')
+                      .length;
+                  serviceCountInt = visitState.visits
+                      .where((v) => v.status == 'in_service')
+                      .length;
+                  awaitingPickupCountInt = visitState.visits
+                      .where((v) => v.status == 'awaiting_pickup')
+                      .length;
                 }
 
-                // Determine customer count
                 String customerCount = '...';
                 if (custState is CustomersLoaded) {
                   customerCount = custState.customers.length.toString();
-                } else if (custState is CustomerError) {
-                  customerCount = 'Err';
                 }
 
-                // Determine vehicles count
                 String vehicleCount = '...';
                 if (vehState is VehicleListLoaded) {
                   vehicleCount = vehState.vehicles.length.toString();
-                } else if (vehState is VehicleListError) {
-                  vehicleCount = 'Err';
                 }
 
-                return GridView.count(
-                  crossAxisCount: crossAxisCount,
-                  crossAxisSpacing: 16,
-                  mainAxisSpacing: 16,
-                  shrinkWrap: true,
-                  physics: const NeverScrollableScrollPhysics(),
-                  childAspectRatio: isDesktop ? 1.4 : 2.5,
-                  children: [
+                List<Widget> cards = [];
+
+                if (role == 'technician') {
+                  cards = [
+                    _buildStatCard(
+                      'IN DIAGNOSTICS',
+                      diagnosisCountInt.toString(),
+                      LucideIcons.search,
+                      AppColors.warningBorder,
+                    ),
+                    _buildStatCard(
+                      'IN SERVICE',
+                      serviceCountInt.toString(),
+                      LucideIcons.wrench,
+                      Colors.indigoAccent,
+                    ),
+                    _buildStatCard(
+                      'AWAITING PICKUP',
+                      awaitingPickupCountInt.toString(),
+                      LucideIcons.checkCheck,
+                      Colors.tealAccent,
+                    ),
+                    _buildStatCard(
+                      'ACTIVE FLOOR LOAD',
+                      activeCountInt.toString(),
+                      LucideIcons.clipboardClock,
+                      AppColors.primary,
+                    ),
+                  ];
+                } else if (role == 'advisor') {
+                  int pendingQueueCount = 0;
+                  if (visitState is VisitListLoaded) {
+                    pendingQueueCount = visitState.visits
+                        .where((v) => v.status == 'checked_in' || v.status == 'in_diagnosis')
+                        .length;
+                  }
+                  cards = [
+                    _buildStatCard(
+                      'ACTIVE CHECK-INS',
+                      activeVisitsCount,
+                      LucideIcons.clipboardClock,
+                      AppColors.primary,
+                    ),
+                    _buildStatCard(
+                      'PENDING QUEUE',
+                      pendingQueueCount.toString(),
+                      LucideIcons.circleDashed,
+                      AppColors.warningBorder,
+                    ),
+                    _buildStatCard(
+                      'CUSTOMERS',
+                      customerCount,
+                      LucideIcons.users,
+                      AppColors.infoBorder,
+                    ),
+                    _buildStatCard(
+                      'VEHICLE FLEET',
+                      vehicleCount,
+                      LucideIcons.car,
+                      AppColors.successBorder,
+                    ),
+                  ];
+                } else {
+                  cards = [
                     _buildStatCard(
                       'ACTIVE CHECK-INS',
                       activeVisitsCount,
@@ -280,7 +382,17 @@ class _DashboardPageState extends State<DashboardPage> {
                       Colors.purpleAccent,
                       isComingSoon: true,
                     ),
-                  ],
+                  ];
+                }
+
+                return GridView.count(
+                  crossAxisCount: crossAxisCount,
+                  crossAxisSpacing: 16,
+                  mainAxisSpacing: 16,
+                  shrinkWrap: true,
+                  physics: const NeverScrollableScrollPhysics(),
+                  childAspectRatio: isDesktop ? 1.4 : 2.5,
+                  children: cards,
                 );
               },
             );
@@ -338,7 +450,7 @@ class _DashboardPageState extends State<DashboardPage> {
                 Container(
                   padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 1),
                   decoration: BoxDecoration(
-                    color: Colors.purple.withOpacity(0.2),
+                    color: Colors.purple.withValues(alpha: 0.2),
                     borderRadius: BorderRadius.circular(3),
                   ),
                   child: Text(
@@ -358,10 +470,84 @@ class _DashboardPageState extends State<DashboardPage> {
     );
   }
 
-  Widget _buildShortcutsSection(bool isDesktop, bool isTablet) {
+  Widget _buildShortcutsSection(bool isDesktop, bool isTablet, String role) {
     int crossAxisCount = 1;
     if (isDesktop) {
       crossAxisCount = 3;
+    } else if (isTablet) {
+      crossAxisCount = 2;
+    }
+
+    List<Widget> shortcuts = [];
+
+    if (role == 'technician') {
+      shortcuts = [
+        _buildShortcutCard(
+          'Active Work Floor',
+          'View currently checked-in vehicles',
+          LucideIcons.car,
+          () => context.push('/visits'),
+        ),
+        _buildShortcutCard(
+          'Tech Job Cards',
+          'Check diagnostic & repair guidelines',
+          LucideIcons.wrench,
+          () {
+            ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(
+                content: Text('Job Cards module coming soon!'),
+                backgroundColor: AppColors.infoBorder,
+              ),
+            );
+          },
+        ),
+      ];
+      if (isDesktop) {
+        crossAxisCount = 2;
+      }
+    } else if (role == 'advisor') {
+      shortcuts = [
+        _buildShortcutCard(
+          'Check In Vehicle',
+          'Log new active visit check-ins',
+          LucideIcons.clipboardClock,
+          () => context.push('/visits'),
+        ),
+        _buildShortcutCard(
+          'Customers Directory',
+          'Create & manage customer profiles',
+          LucideIcons.users,
+          () => context.push('/customers'),
+        ),
+        _buildShortcutCard(
+          'Vehicles Directory',
+          'Lookup & register fleet specs',
+          LucideIcons.car,
+          () => context.push('/vehicles'),
+        ),
+      ];
+    } else {
+      // Manager shortcuts
+      shortcuts = [
+        _buildShortcutCard(
+          'Customers Directory',
+          'Manage profiles and bills',
+          LucideIcons.users,
+          () => context.push('/customers'),
+        ),
+        _buildShortcutCard(
+          'Vehicles Directory',
+          'Lookup specs and records',
+          LucideIcons.car,
+          () => context.push('/vehicles'),
+        ),
+        _buildShortcutCard(
+          'Service Visits',
+          'Active floor check-ins',
+          LucideIcons.clipboard,
+          () => context.push('/visits'),
+        ),
+      ];
     }
 
     return Column(
@@ -378,27 +564,8 @@ class _DashboardPageState extends State<DashboardPage> {
           mainAxisSpacing: 16,
           shrinkWrap: true,
           physics: const NeverScrollableScrollPhysics(),
-          childAspectRatio: isDesktop ? 1.6 : (isTablet ? 4.5 : 3.0),
-          children: [
-            _buildShortcutCard(
-              'Customers Directory',
-              'Manage profiles and bills',
-              LucideIcons.users,
-              () => context.push('/customers'),
-            ),
-            _buildShortcutCard(
-              'Vehicles Directory',
-              'Lookup specs and records',
-              LucideIcons.car,
-              () => context.push('/vehicles'),
-            ),
-            _buildShortcutCard(
-              'Service Visits',
-              'Active floor check-ins',
-              LucideIcons.clipboard,
-              () => context.push('/visits'),
-            ),
-          ],
+          childAspectRatio: isDesktop ? 1.6 : (isTablet ? 2.5 : 2.5),
+          children: shortcuts,
         ),
       ],
     );
@@ -409,7 +576,7 @@ class _DashboardPageState extends State<DashboardPage> {
       onTap: onTap,
       borderRadius: BorderRadius.circular(12),
       child: Container(
-        padding: const EdgeInsets.all(20),
+        padding: const EdgeInsets.all(16),
         decoration: BoxDecoration(
           color: AppColors.bgSurface,
           borderRadius: BorderRadius.circular(12),
@@ -632,15 +799,40 @@ class _DashboardPageState extends State<DashboardPage> {
     }
   }
 
-  Widget _buildComingSoonSidebar() {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(
-          'UPCOMING SYSTEM MODULES',
-          style: AppTypography.headingSmall.copyWith(letterSpacing: 0.8),
+  Widget _buildComingSoonSidebar(String role) {
+    List<Widget> modules = [];
+
+    if (role == 'manager') {
+      modules = [
+        _buildPlaceholderModule(
+          'Billing & Payment Disputes',
+          'Generate parts/labor invoices, record deposits, and process customer credit refunds.',
+          LucideIcons.receipt,
         ),
         const SizedBox(height: 16),
+        _buildPlaceholderModule(
+          'Shop Bay Manager',
+          'Allocate physical service bays, map Gantt repair schedules, and minimize queue delays.',
+          LucideIcons.calendar,
+        ),
+      ];
+    } else if (role == 'advisor') {
+      modules = [
+        _buildPlaceholderModule(
+          'Shop Bay Manager',
+          'Allocate physical service bays, map Gantt repair schedules, and minimize queue delays.',
+          LucideIcons.calendar,
+        ),
+        const SizedBox(height: 16),
+        _buildPlaceholderModule(
+          'Service Jobs Dispatch',
+          'Track technician assignments, diagnostic logs, and job status counters.',
+          LucideIcons.wrench,
+        ),
+      ];
+    } else {
+      // technician
+      modules = [
         _buildPlaceholderModule(
           'Service Jobs Dispatch',
           'Track technician assignments, diagnostic logs, and job status counters.',
@@ -652,12 +844,18 @@ class _DashboardPageState extends State<DashboardPage> {
           'Allocate physical service bays, map Gantt repair schedules, and minimize queue delays.',
           LucideIcons.calendar,
         ),
-        const SizedBox(height: 16),
-        _buildPlaceholderModule(
-          'Billing & Payment Disputes',
-          'Generate parts/labor invoices, record deposits, and process customer credit refunds.',
-          LucideIcons.receipt,
+      ];
+    }
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          'UPCOMING SYSTEM MODULES',
+          style: AppTypography.headingSmall.copyWith(letterSpacing: 0.8),
         ),
+        const SizedBox(height: 16),
+        ...modules,
       ],
     );
   }
@@ -666,10 +864,10 @@ class _DashboardPageState extends State<DashboardPage> {
     return Container(
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
-        color: AppColors.bgSurface.withOpacity(0.6),
+        color: AppColors.bgSurface.withValues(alpha: 0.6),
         borderRadius: BorderRadius.circular(12),
         border: Border.all(
-          color: AppColors.borderDefault.withOpacity(0.5),
+          color: AppColors.borderDefault.withValues(alpha: 0.5),
           style: BorderStyle.solid,
         ),
       ),
@@ -698,7 +896,7 @@ class _DashboardPageState extends State<DashboardPage> {
                     Container(
                       padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 1),
                       decoration: BoxDecoration(
-                        color: AppColors.textDisabled.withOpacity(0.15),
+                        color: AppColors.textDisabled.withValues(alpha: 0.15),
                         borderRadius: BorderRadius.circular(3),
                       ),
                       child: Text(
