@@ -13,6 +13,7 @@ import '../storage/secure_storage.dart';
 import 'auth_module.dart';
 import 'customer_module.dart';
 import 'vehicle_module.dart';
+import 'visit_module.dart';
 
 final sl = GetIt.instance;
 
@@ -39,4 +40,5 @@ Future<void> init() async {
   initAuth();
   initCustomer();
   initVehicle();
+  initVisit();
 }

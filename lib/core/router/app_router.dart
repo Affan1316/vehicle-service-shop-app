@@ -8,6 +8,8 @@ import '../../features/customer/presentation/pages/customer_list_page.dart';
 import '../../features/customer/presentation/pages/customer_hub_page.dart';
 import '../../features/vehicle/presentation/bloc/vehicle_list/vehicle_list_bloc.dart';
 import '../../features/vehicle/presentation/pages/vehicle_list_page.dart';
+import '../../features/visit/presentation/bloc/visit_list_bloc.dart';
+import '../../features/visit/presentation/pages/visit_list_page.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import '../di/injection_container.dart';
 import '../../features/customer/presentation/bloc/customer_bloc.dart';
@@ -73,6 +75,11 @@ class AppRouter {
                   onPressed: () => context.push('/vehicles'),
                   child: const Text('Go to Vehicles Directory'),
                 ),
+                const SizedBox(height: 12),
+                ElevatedButton(
+                  onPressed: () => context.push('/visits'),
+                  child: const Text('Go to Visits Directory'),
+                ),
               ],
             ),
           ),
@@ -110,6 +117,14 @@ class AppRouter {
         builder: (context, state) => BlocProvider<VehicleListBloc>(
           create: (context) => sl<VehicleListBloc>(),
           child: const VehicleListPage(),
+        ),
+      ),
+      GoRoute(
+        name: RouteNames.visitListName,
+        path: RouteNames.visitListPath,
+        builder: (context, state) => BlocProvider<VisitListBloc>(
+          create: (context) => sl<VisitListBloc>(),
+          child: const VisitListPage(),
         ),
       ),
     ],

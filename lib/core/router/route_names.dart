@@ -18,4 +18,7 @@ class RouteNames {
 
   static const String vehicleListName = 'vehicles';
   static const String vehicleListPath = '/vehicles';
+
+  static const String visitListName = 'visits';
+  static const String visitListPath = '/visits';
 }
