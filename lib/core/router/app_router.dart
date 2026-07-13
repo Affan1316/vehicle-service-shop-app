@@ -14,6 +14,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import '../di/injection_container.dart';
 import '../../features/customer/presentation/bloc/customer_bloc.dart';
 import '../../features/customer/presentation/bloc/vehicle_bloc.dart';
+import '../../features/dashboard/presentation/pages/dashboard_page.dart';
 import 'route_names.dart';
 
 class AppRouter {
@@ -59,30 +60,19 @@ class AppRouter {
       GoRoute(
         name: RouteNames.dashboardName,
         path: RouteNames.dashboardPath,
-        builder: (context, state) => Scaffold(
-          body: Center(
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                const Text('Dashboard Placeholder'),
-                const SizedBox(height: 16),
-                ElevatedButton(
-                  onPressed: () => context.push('/customers'),
-                  child: const Text('Go to Customers Directory'),
-                ),
-                const SizedBox(height: 12),
-                ElevatedButton(
-                  onPressed: () => context.push('/vehicles'),
-                  child: const Text('Go to Vehicles Directory'),
-                ),
-                const SizedBox(height: 12),
-                ElevatedButton(
-                  onPressed: () => context.push('/visits'),
-                  child: const Text('Go to Visits Directory'),
-                ),
-              ],
+        builder: (context, state) => MultiBlocProvider(
+          providers: [
+            BlocProvider<CustomerBloc>(
+              create: (context) => sl<CustomerBloc>(),
             ),
-          ),
+            BlocProvider<VehicleListBloc>(
+              create: (context) => sl<VehicleListBloc>(),
+            ),
+            BlocProvider<VisitListBloc>(
+              create: (context) => sl<VisitListBloc>(),
+            ),
+          ],
+          child: const DashboardPage(),
         ),
       ),
       GoRoute(
