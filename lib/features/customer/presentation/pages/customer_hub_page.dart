@@ -9,6 +9,7 @@ import '../../../../core/widgets/input/app_text_field.dart';
 import '../bloc/customer_bloc.dart';
 import '../bloc/customer_event.dart';
 import '../bloc/customer_state.dart';
+import '../bloc/vehicle_bloc.dart';
 import '../widgets/vehicle_register_dialog.dart';
 
 class CustomerHubPage extends StatefulWidget {
@@ -32,6 +33,7 @@ class _CustomerHubPageState extends State<CustomerHubPage> {
   }
 
   void _showEditProfileDialog(dynamic customer) {
+    final customerBloc = context.read<CustomerBloc>();
     showDialog(
       context: context,
       builder: (dialogContext) {
@@ -41,115 +43,120 @@ class _CustomerHubPageState extends State<CustomerHubPage> {
         String customerType = customer.customerType;
         bool taxExempt = customer.taxExempt;
 
-        return StatefulBuilder(
-          builder: (context, setState) {
-            return AlertDialog(
-              backgroundColor: AppColors.bgSurface,
-              title: Text(
-                'Edit Profile',
-                style: AppTypography.headingMedium.copyWith(color: AppColors.textPrimary),
-              ),
-              content: Form(
-                key: formKey,
-                child: SingleChildScrollView(
-                  child: Column(
-                    mainAxisSize: MainAxisSize.min,
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      AppTextField(
-                        label: 'Full Name',
-                        controller: nameController,
-                        validator: (value) =>
-                            value == null || value.trim().isEmpty ? 'Name is required' : null,
-                      ),
-                      const SizedBox(height: 16),
-                      DropdownButtonFormField<String>(
-                        dropdownColor: AppColors.bgSurface,
-                        initialValue: customerType,
-                        decoration: const InputDecoration(
-                          labelText: 'Customer Type',
-                          enabledBorder: OutlineInputBorder(
-                            borderSide: BorderSide(color: AppColors.borderDefault),
-                          ),
-                          focusedBorder: OutlineInputBorder(
-                            borderSide: BorderSide(color: AppColors.borderActive),
-                          ),
+        return BlocProvider.value(
+          value: customerBloc,
+          child: StatefulBuilder(
+            builder: (builderContext, setState) {
+              return AlertDialog(
+                backgroundColor: AppColors.bgSurface,
+                title: Text(
+                  'Edit Profile',
+                  style: AppTypography.headingMedium.copyWith(color: AppColors.textPrimary),
+                ),
+                content: Form(
+                  key: formKey,
+                  child: SingleChildScrollView(
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        AppTextField(
+                          label: 'Full Name',
+                          controller: nameController,
+                          validator: (value) =>
+                              value == null || value.trim().isEmpty ? 'Name is required' : null,
                         ),
-                        style: AppTypography.bodyLarge.copyWith(color: AppColors.textPrimary),
-                        items: const [
-                          DropdownMenuItem(value: 'individual', child: Text('Individual')),
-                          DropdownMenuItem(value: 'fleet', child: Text('Fleet Owner')),
-                        ],
-                        onChanged: (value) {
-                          if (value != null) {
-                            setState(() => customerType = value);
-                          }
-                        },
-                      ),
-                      const SizedBox(height: 16),
-                      AppTextField(
-                        label: 'Billing Address',
-                        controller: addressController,
-                      ),
-                      const SizedBox(height: 16),
-                      Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                        children: [
-                          Text(
-                            'Tax Exempt Status',
-                            style: AppTypography.bodyLarge.copyWith(color: AppColors.textPrimary),
+                        const SizedBox(height: 16),
+                        DropdownButtonFormField<String>(
+                          dropdownColor: AppColors.bgSurface,
+                          initialValue: customerType,
+                          decoration: const InputDecoration(
+                            labelText: 'Customer Type',
+                            enabledBorder: OutlineInputBorder(
+                              borderSide: BorderSide(color: AppColors.borderDefault),
+                            ),
+                            focusedBorder: OutlineInputBorder(
+                              borderSide: BorderSide(color: AppColors.borderActive),
+                            ),
                           ),
-                          Switch(
-                            value: taxExempt,
-                            activeThumbColor: AppColors.primary,
-                            onChanged: (value) {
-                              setState(() => taxExempt = value);
-                            },
-                          ),
-                        ],
-                      ),
-                    ],
+                          style: AppTypography.bodyLarge.copyWith(color: AppColors.textPrimary),
+                          items: const [
+                            DropdownMenuItem(value: 'individual', child: Text('Individual')),
+                            DropdownMenuItem(value: 'fleet', child: Text('Fleet Owner')),
+                          ],
+                          onChanged: (value) {
+                            if (value != null) {
+                              setState(() => customerType = value);
+                            }
+                          },
+                        ),
+                        const SizedBox(height: 16),
+                        AppTextField(
+                          label: 'Billing Address',
+                          controller: addressController,
+                        ),
+                        const SizedBox(height: 16),
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            Text(
+                              'Tax Exempt Status',
+                              style: AppTypography.bodyLarge.copyWith(color: AppColors.textPrimary),
+                            ),
+                            Switch(
+                              value: taxExempt,
+                              activeThumbColor: AppColors.primary,
+                              onChanged: (value) {
+                                setState(() => taxExempt = value);
+                              },
+                            ),
+                          ],
+                        ),
+                      ],
+                    ),
                   ),
                 ),
-              ),
-              actions: [
-                TextButton(
-                  onPressed: () => Navigator.pop(dialogContext),
-                  child: Text('Cancel', style: TextStyle(color: AppColors.textSecondary)),
-                ),
-                ElevatedButton(
-                  style: ElevatedButton.styleFrom(backgroundColor: AppColors.primary),
-                  onPressed: () {
-                    if (formKey.currentState?.validate() ?? false) {
-                      context.read<CustomerBloc>().add(
-                            UpdateCustomer(
-                              id: customer.id,
-                              name: nameController.text.trim(),
-                              customerType: customerType,
-                              billingAddress: addressController.text.trim().isEmpty
-                                  ? null
-                                  : addressController.text.trim(),
-                              taxExempt: taxExempt,
-                            ),
-                          );
-                      Navigator.pop(dialogContext);
-                    }
-                  },
-                  child: Text('Save Changes', style: TextStyle(color: AppColors.textPrimary)),
-                ),
-              ],
-            );
-          },
+                actions: [
+                  TextButton(
+                    onPressed: () => Navigator.pop(dialogContext),
+                    child: Text('Cancel', style: TextStyle(color: AppColors.textSecondary)),
+                  ),
+                  ElevatedButton(
+                    style: ElevatedButton.styleFrom(backgroundColor: AppColors.primary),
+                    onPressed: () {
+                      if (formKey.currentState?.validate() ?? false) {
+                        builderContext.read<CustomerBloc>().add(
+                              UpdateCustomer(
+                                id: customer.id,
+                                name: nameController.text.trim(),
+                                customerType: customerType,
+                                billingAddress: addressController.text.trim().isEmpty
+                                    ? null
+                                    : addressController.text.trim(),
+                                taxExempt: taxExempt,
+                              ),
+                            );
+                        Navigator.pop(dialogContext);
+                      }
+                    },
+                    child: Text('Save Changes', style: TextStyle(color: AppColors.textPrimary)),
+                  ),
+                ],
+              );
+            },
+          ),
         );
       },
     );
   }
 
   void _showAddVehicleDialog() {
+    final vehicleBloc = context.read<VehicleBloc>();
     showDialog(
       context: context,
       builder: (dialogContext) {
         return VehicleRegisterDialog(
+          vehicleBloc: vehicleBloc,
           customerId: widget.customerId,
           onSuccess: _loadDetails,
         );

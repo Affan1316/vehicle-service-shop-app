@@ -10,6 +10,7 @@ import '../../domain/entities/work_order.dart';
 import '../bloc/job_bloc.dart';
 import '../bloc/job_event.dart';
 import '../bloc/job_state.dart';
+import '../widgets/create_job_card_dialog.dart';
 
 class WorkOrdersListPage extends StatefulWidget {
   const WorkOrdersListPage({super.key});
@@ -457,94 +458,38 @@ class _WorkOrdersListPageState extends State<WorkOrdersListPage> {
   }
 
   void _showCreateWorkOrderDialog(BuildContext context) {
-    final quoteController = TextEditingController();
-    final vehicleController = TextEditingController();
-    final customerController = TextEditingController();
-    final amountController = TextEditingController();
-    final formKey = GlobalKey<FormState>();
+    final jobBloc = context.read<JobBloc>();
+    final state = jobBloc.state;
+
+    Map<String, String> customerNames = {};
+    Map<String, String> vehicleNames = {};
+
+    if (state is WorkOrdersLoaded) {
+      customerNames = state.customerNames;
+      vehicleNames = state.vehicleNames;
+    }
 
     showDialog(
       context: context,
       builder: (dialogContext) {
-        return AlertDialog(
-          backgroundColor: AppColors.bgSurface,
-          title: Text(
-            'Create Service Job Card',
-            style: AppTypography.headingMedium.copyWith(color: AppColors.textPrimary),
-          ),
-          content: Form(
-            key: formKey,
-            child: SingleChildScrollView(
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  TextFormField(
-                    controller: quoteController,
-                    style: AppTypography.bodyLarge.copyWith(color: AppColors.textPrimary),
-                    decoration: const InputDecoration(
-                      labelText: 'Quote ID (UUID)',
-                      labelStyle: TextStyle(color: AppColors.textSecondary),
-                    ),
-                    validator: (v) => v == null || v.isEmpty ? 'Field required' : null,
-                  ),
-                  const SizedBox(height: 12),
-                  TextFormField(
-                    controller: vehicleController,
-                    style: AppTypography.bodyLarge.copyWith(color: AppColors.textPrimary),
-                    decoration: const InputDecoration(
-                      labelText: 'Vehicle VIN (17 chars)',
-                      labelStyle: TextStyle(color: AppColors.textSecondary),
-                    ),
-                    validator: (v) => v == null || v.length != 17 ? 'Must be 17 characters' : null,
-                  ),
-                  const SizedBox(height: 12),
-                  TextFormField(
-                    controller: customerController,
-                    style: AppTypography.bodyLarge.copyWith(color: AppColors.textPrimary),
-                    decoration: const InputDecoration(
-                      labelText: 'Customer ID (UUID)',
-                      labelStyle: TextStyle(color: AppColors.textSecondary),
-                    ),
-                    validator: (v) => v == null || v.isEmpty ? 'Field required' : null,
-                  ),
-                  const SizedBox(height: 12),
-                  TextFormField(
-                    controller: amountController,
-                    style: AppTypography.bodyLarge.copyWith(color: AppColors.textPrimary),
-                    keyboardType: TextInputType.number,
-                    decoration: const InputDecoration(
-                      labelText: 'Authorized Limit Amount (\$)',
-                      labelStyle: TextStyle(color: AppColors.textSecondary),
-                    ),
-                    validator: (v) => v == null || double.tryParse(v) == null ? 'Enter valid number' : null,
-                  ),
-                ],
+        return CreateJobCardDialog(
+          customerNames: customerNames,
+          vehicleNames: vehicleNames,
+          onSubmit: ({
+            required String quoteId,
+            required String vehicleId,
+            required String customerId,
+            required double authorizedAmount,
+          }) {
+            jobBloc.add(
+              CreateWorkOrderEvent(
+                quoteId: quoteId,
+                vehicleId: vehicleId,
+                customerId: customerId,
+                authorizedAmount: authorizedAmount,
               ),
-            ),
-          ),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.pop(dialogContext),
-              child: const Text('Cancel', style: TextStyle(color: AppColors.textSecondary)),
-            ),
-            ElevatedButton(
-              style: ElevatedButton.styleFrom(backgroundColor: AppColors.primary),
-              onPressed: () {
-                if (formKey.currentState!.validate()) {
-                  context.read<JobBloc>().add(
-                        CreateWorkOrderEvent(
-                          quoteId: quoteController.text.trim(),
-                          vehicleId: vehicleController.text.trim().toUpperCase(),
-                          customerId: customerController.text.trim(),
-                          authorizedAmount: double.parse(amountController.text.trim()),
-                        ),
-                      );
-                  Navigator.pop(dialogContext);
-                }
-              },
-              child: const Text('Generate', style: TextStyle(color: AppColors.bgDefault)),
-            ),
-          ],
+            );
+          },
         );
       },
     );

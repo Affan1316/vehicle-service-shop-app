@@ -47,8 +47,8 @@ class JobBloc extends Bloc<JobEvent, JobState> {
   ) async {
     emit(JobLoading());
     final woResult = await _getWorkOrdersUseCase();
-    final customersResult = await _getCustomersUseCase(limit: 500);
-    final vehiclesResult = await _getVehiclesUseCase(limit: 500);
+    final customersResult = await _getCustomersUseCase(limit: 100);
+    final vehiclesResult = await _getVehiclesUseCase(limit: 100);
 
     woResult.fold(
       (failure) => emit(JobError(failure.message)),

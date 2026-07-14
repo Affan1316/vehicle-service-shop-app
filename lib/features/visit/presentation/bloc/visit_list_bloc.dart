@@ -38,8 +38,8 @@ class VisitListBloc extends Bloc<VisitListEvent, VisitListState> {
   ) async {
     emit(VisitListLoading());
     final visitsResult = await _getVisitsUseCase(limit: event.limit, offset: event.offset);
-    final customersResult = await _getCustomersUseCase(limit: 500);
-    final vehiclesResult = await _getVehiclesUseCase(limit: 500);
+    final customersResult = await _getCustomersUseCase(limit: 100);
+    final vehiclesResult = await _getVehiclesUseCase(limit: 100);
 
     visitsResult.fold(
       (failure) => emit(VisitListError(failure.message)),

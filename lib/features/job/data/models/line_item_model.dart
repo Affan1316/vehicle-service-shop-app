@@ -14,12 +14,17 @@ class LineItemModel extends LineItem {
   });
 
   factory LineItemModel.fromJson(Map<String, dynamic> json) {
+    final rawPrice = json['price'];
+    final double parsedPrice = rawPrice is num
+        ? rawPrice.toDouble()
+        : (rawPrice is String ? double.tryParse(rawPrice) ?? 0.0 : 0.0);
+
     return LineItemModel(
       lineItemId: json['line_item_id'] as String,
       workOrderId: json['work_order_id'] as String,
       description: json['description'] as String,
       billingMode: json['billing_mode'] as String,
-      price: (json['price'] as num).toDouble(),
+      price: parsedPrice,
       status: json['status'] as String,
       holdReason: json['hold_reason'] as String?,
       startedAt: json['started_at'] != null ? DateTime.parse(json['started_at'] as String) : null,

@@ -8,10 +8,12 @@ import '../bloc/vehicle_event.dart';
 import '../bloc/vehicle_state.dart';
 
 class VehicleRegisterDialog extends StatefulWidget {
+  final VehicleBloc vehicleBloc;
   final String customerId;
   final VoidCallback onSuccess;
 
   const VehicleRegisterDialog({
+    required this.vehicleBloc,
     required this.customerId,
     required this.onSuccess,
     super.key,
@@ -41,7 +43,7 @@ class _VehicleRegisterDialogState extends State<VehicleRegisterDialog> {
 
   void _submit() {
     if (_formKey.currentState?.validate() ?? false) {
-      context.read<VehicleBloc>().add(
+      widget.vehicleBloc.add(
             RegisterVehicleEvent(
               vin: _vinController.text.trim().toUpperCase(),
               customerId: widget.customerId,
@@ -57,6 +59,7 @@ class _VehicleRegisterDialogState extends State<VehicleRegisterDialog> {
   @override
   Widget build(BuildContext context) {
     return BlocListener<VehicleBloc, VehicleState>(
+      bloc: widget.vehicleBloc,
       listener: (context, state) {
         if (state is VehicleOperationSuccess) {
           ScaffoldMessenger.of(context).showSnackBar(
@@ -154,6 +157,7 @@ class _VehicleRegisterDialogState extends State<VehicleRegisterDialog> {
             child: Text('Cancel', style: TextStyle(color: AppColors.textSecondary)),
           ),
           BlocBuilder<VehicleBloc, VehicleState>(
+            bloc: widget.vehicleBloc,
             builder: (context, state) {
               final isLoading = state is VehicleLoading;
               return ElevatedButton(

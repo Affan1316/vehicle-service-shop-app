@@ -28,6 +28,16 @@ class WorkOrderModel extends WorkOrder {
         .map((item) => LineItemModel.fromJson(item as Map<String, dynamic>))
         .toList();
 
+    final rawAuthAmount = json['authorized_amount'];
+    final double parsedAuthAmount = rawAuthAmount is num
+        ? rawAuthAmount.toDouble()
+        : (rawAuthAmount is String ? double.tryParse(rawAuthAmount) ?? 0.0 : 0.0);
+
+    final rawTotalCost = json['total_cost'];
+    final double parsedTotalCost = rawTotalCost is num
+        ? rawTotalCost.toDouble()
+        : (rawTotalCost is String ? double.tryParse(rawTotalCost) ?? 0.0 : 0.0);
+
     return WorkOrderModel(
       workOrderId: json['work_order_id'] as String,
       quoteId: json['quote_id'] as String,
@@ -36,7 +46,7 @@ class WorkOrderModel extends WorkOrder {
       customerId: json['customer_id'] as String,
       bayId: json['bay_id'] as String?,
       status: json['status'] as String,
-      authorizedAmount: (json['authorized_amount'] as num).toDouble(),
+      authorizedAmount: parsedAuthAmount,
       promisedDate: json['promised_date'] != null ? DateTime.parse(json['promised_date'] as String) : null,
       createdAt: DateTime.parse(json['created_at'] as String),
       scheduledAt: json['scheduled_at'] != null ? DateTime.parse(json['scheduled_at'] as String) : null,
@@ -44,7 +54,7 @@ class WorkOrderModel extends WorkOrder {
       pauseReason: json['pause_reason'] as String?,
       closedAt: json['closed_at'] != null ? DateTime.parse(json['closed_at'] as String) : null,
       archivedAt: json['archived_at'] != null ? DateTime.parse(json['archived_at'] as String) : null,
-      totalCost: (json['total_cost'] as num? ?? 0.0).toDouble(),
+      totalCost: parsedTotalCost,
       lineItems: lineItems,
     );
   }

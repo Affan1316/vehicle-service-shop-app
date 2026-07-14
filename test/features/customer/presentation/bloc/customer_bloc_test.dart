@@ -4,7 +4,6 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:mocktail/mocktail.dart';
 import 'package:wheels_doc/core/error/failures.dart';
 import 'package:wheels_doc/features/customer/domain/entities/customer.dart';
-import 'package:wheels_doc/features/vehicle/domain/entities/vehicle.dart';
 import 'package:wheels_doc/features/customer/domain/usecases/create_customer_usecase.dart';
 import 'package:wheels_doc/features/customer/domain/usecases/get_customer_by_id_usecase.dart';
 import 'package:wheels_doc/features/customer/domain/usecases/get_customers_usecase.dart';
@@ -39,16 +38,6 @@ void main() {
     billingAddress: '123 Main St',
     taxExempt: false,
   );
-
-  final tVehicle = Vehicle(
-    vin: '1HGCM82633A123456',
-    customerId: 'cust-123',
-    make: 'Toyota',
-    model: 'Corolla',
-    year: 2020,
-    currentMileage: 50000,
-  );
-
   setUp(() {
     mockGetCustomersUseCase = MockGetCustomersUseCase();
     mockGetCustomerByIdUseCase = MockGetCustomerByIdUseCase();
