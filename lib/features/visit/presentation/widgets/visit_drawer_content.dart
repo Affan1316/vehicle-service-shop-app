@@ -9,6 +9,10 @@ import '../../../auth/presentation/bloc/auth_state.dart';
 import '../../domain/entities/visit.dart';
 import '../bloc/visit_list_bloc.dart';
 import '../bloc/visit_list_event.dart';
+import '../../../../core/di/injection_container.dart';
+import '../../../quote/presentation/bloc/quote_bloc.dart';
+import '../../../quote/presentation/bloc/quote_event.dart';
+import '../../../quote/presentation/widgets/create_quote_dialog.dart';
 
 class VisitDrawerContent extends StatelessWidget {
   final Visit visit;
@@ -219,6 +223,42 @@ class VisitDrawerContent extends StatelessWidget {
                               );
                           onUpdateSuccess();
                           Navigator.pop(context);
+                        },
+                      ),
+                    ],
+                    if (visit.status == 'awaiting_quote' || visit.status == 'in_diagnosis') ...[
+                      const SizedBox(height: 12),
+                      AppButton(
+                        text: 'Create Quote Estimate',
+                        isSecondary: true,
+                        onPressed: () {
+                          showDialog(
+                            context: context,
+                            builder: (dialogContext) {
+                              return CreateQuoteDialog(
+                                initialCustomerId: visit.customerId,
+                                initialVehicleId: visit.vehicleId,
+                                initialVisitId: visit.visitId,
+                                onSubmit: ({
+                                  required String customerId,
+                                  required String vehicleId,
+                                  String? visitId,
+                                  required double totalAmount,
+                                  required DateTime validUntil,
+                                }) {
+                                  sl<QuoteBloc>().add(
+                                    CreateQuoteEvent(
+                                      customerId: customerId,
+                                      vehicleId: vehicleId,
+                                      visitId: visitId,
+                                      totalAmount: totalAmount,
+                                      validUntil: validUntil,
+                                    ),
+                                  );
+                                },
+                              );
+                            },
+                          );
                         },
                       ),
                     ],

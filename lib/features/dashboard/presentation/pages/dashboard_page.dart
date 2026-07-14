@@ -527,6 +527,12 @@ class _DashboardPageState extends State<DashboardPage> {
           LucideIcons.car,
           () => context.push('/vehicles'),
         ),
+        _buildShortcutCard(
+          'Quotes & Estimates',
+          'Create & issue quotes',
+          LucideIcons.fileText,
+          () => context.push('/quotes'),
+        ),
       ];
     } else {
       // Manager shortcuts
@@ -548,6 +554,12 @@ class _DashboardPageState extends State<DashboardPage> {
           'Active shop floor dispatch',
           LucideIcons.wrench,
           () => context.push('/work-orders'),
+        ),
+        _buildShortcutCard(
+          'Quotes & Estimates',
+          'Create & issue quotes',
+          LucideIcons.fileText,
+          () => context.push('/quotes'),
         ),
       ];
     }

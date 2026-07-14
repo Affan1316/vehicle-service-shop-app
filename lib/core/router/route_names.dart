@@ -27,4 +27,7 @@ class RouteNames {
 
   static const String workOrderDetailName = 'work-order-detail';
   static const String workOrderDetailPath = '/work-orders/:id';
+
+  static const String quoteListName = 'quotes';
+  static const String quoteListPath = '/quotes';
 }

@@ -11,6 +11,10 @@ import '../bloc/customer_event.dart';
 import '../bloc/customer_state.dart';
 import '../bloc/vehicle_bloc.dart';
 import '../widgets/vehicle_register_dialog.dart';
+import '../../../../core/di/injection_container.dart';
+import '../../../quote/presentation/bloc/quote_bloc.dart';
+import '../../../quote/presentation/bloc/quote_event.dart';
+import '../../../quote/presentation/widgets/create_quote_dialog.dart';
 
 class CustomerHubPage extends StatefulWidget {
   final String customerId;
@@ -314,6 +318,38 @@ class _CustomerHubPageState extends State<CustomerHubPage> {
                       AppButton(
                         text: 'Register Vehicle',
                         onPressed: _showAddVehicleDialog,
+                      ),
+                      const SizedBox(height: 12),
+                      AppButton(
+                        text: 'Create Estimate/Quote',
+                        isSecondary: true,
+                        onPressed: () {
+                          showDialog(
+                            context: context,
+                            builder: (dialogContext) {
+                              return CreateQuoteDialog(
+                                initialCustomerId: customer.id,
+                                onSubmit: ({
+                                  required String customerId,
+                                  required String vehicleId,
+                                  String? visitId,
+                                  required double totalAmount,
+                                  required DateTime validUntil,
+                                }) {
+                                  sl<QuoteBloc>().add(
+                                    CreateQuoteEvent(
+                                      customerId: customerId,
+                                      vehicleId: vehicleId,
+                                      visitId: visitId,
+                                      totalAmount: totalAmount,
+                                      validUntil: validUntil,
+                                    ),
+                                  );
+                                },
+                              );
+                            },
+                          );
+                        },
                       ),
                     ],
                   ),

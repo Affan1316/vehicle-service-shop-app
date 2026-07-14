@@ -18,6 +18,8 @@ import '../di/injection_container.dart';
 import '../../features/customer/presentation/bloc/customer_bloc.dart';
 import '../../features/customer/presentation/bloc/vehicle_bloc.dart';
 import '../../features/dashboard/presentation/pages/dashboard_page.dart';
+import '../../features/quote/presentation/bloc/quote_bloc.dart';
+import '../../features/quote/presentation/pages/quotes_list_page.dart';
 import 'route_names.dart';
 
 class AppRouter {
@@ -138,6 +140,14 @@ class AppRouter {
             child: WorkOrderDetailPage(workOrderId: id),
           );
         },
+      ),
+      GoRoute(
+        name: RouteNames.quoteListName,
+        path: RouteNames.quoteListPath,
+        builder: (context, state) => BlocProvider<QuoteBloc>(
+          create: (context) => sl<QuoteBloc>(),
+          child: const QuotesListPage(),
+        ),
       ),
     ],
   );
