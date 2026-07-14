@@ -10,6 +10,9 @@ import '../../features/vehicle/presentation/bloc/vehicle_list/vehicle_list_bloc.
 import '../../features/vehicle/presentation/pages/vehicle_list_page.dart';
 import '../../features/visit/presentation/bloc/visit_list_bloc.dart';
 import '../../features/visit/presentation/pages/visit_list_page.dart';
+import '../../features/job/presentation/bloc/job_bloc.dart';
+import '../../features/job/presentation/pages/work_orders_list_page.dart';
+import '../../features/job/presentation/pages/work_order_detail_page.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import '../di/injection_container.dart';
 import '../../features/customer/presentation/bloc/customer_bloc.dart';
@@ -116,6 +119,25 @@ class AppRouter {
           create: (context) => sl<VisitListBloc>(),
           child: const VisitListPage(),
         ),
+      ),
+      GoRoute(
+        name: RouteNames.workOrderListName,
+        path: RouteNames.workOrderListPath,
+        builder: (context, state) => BlocProvider<JobBloc>(
+          create: (context) => sl<JobBloc>(),
+          child: const WorkOrdersListPage(),
+        ),
+      ),
+      GoRoute(
+        name: RouteNames.workOrderDetailName,
+        path: RouteNames.workOrderDetailPath,
+        builder: (context, state) {
+          final id = state.pathParameters['id'] ?? '';
+          return BlocProvider<JobBloc>(
+            create: (context) => sl<JobBloc>(),
+            child: WorkOrderDetailPage(workOrderId: id),
+          );
+        },
       ),
     ],
   );

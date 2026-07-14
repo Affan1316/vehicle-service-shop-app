@@ -14,6 +14,7 @@ import 'auth_module.dart';
 import 'customer_module.dart';
 import 'vehicle_module.dart';
 import 'visit_module.dart';
+import 'job_module.dart';
 
 final sl = GetIt.instance;
 
@@ -41,4 +42,5 @@ Future<void> init() async {
   initCustomer();
   initVehicle();
   initVisit();
+  initJob();
 }

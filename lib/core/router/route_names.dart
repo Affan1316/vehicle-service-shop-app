@@ -21,4 +21,10 @@ class RouteNames {
 
   static const String visitListName = 'visits';
   static const String visitListPath = '/visits';
+
+  static const String workOrderListName = 'work-orders';
+  static const String workOrderListPath = '/work-orders';
+
+  static const String workOrderDetailName = 'work-order-detail';
+  static const String workOrderDetailPath = '/work-orders/:id';
 }

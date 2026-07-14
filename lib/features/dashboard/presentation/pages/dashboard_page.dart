@@ -495,20 +495,13 @@ class _DashboardPageState extends State<DashboardPage> {
           'Active Work Floor',
           'View currently checked-in vehicles',
           LucideIcons.car,
-          () => context.push('/visits'),
+          () => context.push('/work-orders'),
         ),
         _buildShortcutCard(
           'Tech Job Cards',
-          'Check diagnostic & repair guidelines',
+          'Track your repair tasks progress',
           LucideIcons.wrench,
-          () {
-            ScaffoldMessenger.of(context).showSnackBar(
-              const SnackBar(
-                content: Text('Job Cards module coming soon!'),
-                backgroundColor: AppColors.infoBorder,
-              ),
-            );
-          },
+          () => context.push('/work-orders'),
         ),
       ];
       if (isDesktop) {
@@ -551,10 +544,10 @@ class _DashboardPageState extends State<DashboardPage> {
           () => context.push('/vehicles'),
         ),
         _buildShortcutCard(
-          'Service Visits',
-          'Active floor check-ins',
-          LucideIcons.clipboard,
-          () => context.push('/visits'),
+          'Service Job Cards',
+          'Active shop floor dispatch',
+          LucideIcons.wrench,
+          () => context.push('/work-orders'),
         ),
       ];
     }
