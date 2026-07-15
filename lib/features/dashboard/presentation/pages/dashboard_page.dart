@@ -533,6 +533,12 @@ class _DashboardPageState extends State<DashboardPage> {
           LucideIcons.fileText,
           () => context.push('/quotes'),
         ),
+        _buildShortcutCard(
+          'Billing & Payments',
+          'Manage invoices and payments',
+          LucideIcons.receipt,
+          () => context.push('/billing'),
+        ),
       ];
     } else {
       // Manager shortcuts
@@ -560,6 +566,12 @@ class _DashboardPageState extends State<DashboardPage> {
           'Create & issue quotes',
           LucideIcons.fileText,
           () => context.push('/quotes'),
+        ),
+        _buildShortcutCard(
+          'Billing & Payments',
+          'Manage invoices and payments',
+          LucideIcons.receipt,
+          () => context.push('/billing'),
         ),
       ];
     }
@@ -818,13 +830,6 @@ class _DashboardPageState extends State<DashboardPage> {
 
     if (role == 'manager') {
       modules = [
-        _buildActiveModuleCard(
-          'Billing & Payment Disputes',
-          'Generate parts/labor invoices, record deposits, and process customer credit refunds.',
-          LucideIcons.receipt,
-          () => context.push('/billing'),
-        ),
-        const SizedBox(height: 16),
         _buildPlaceholderModule(
           'Shop Bay Manager',
           'Allocate physical service bays, map Gantt repair schedules, and minimize queue delays.',
