@@ -113,10 +113,15 @@ class _DashboardPageState extends State<DashboardPage> {
   @override
   void initState() {
     super.initState();
-    // Dispatch fetch events to populate dashboard metrics
-    context.read<CustomerBloc>().add(FetchCustomers());
-    context.read<VehicleListBloc>().add(const FetchVehiclesList());
-    context.read<VisitListBloc>().add(FetchVisitsList());
+    // Dispatch fetch events to populate dashboard metrics if user is not a customer
+    final authState = context.read<AuthBloc>().state;
+    if (authState is Authenticated && authState.user.role == 'customer') {
+      // Customer dashboard fetches its own data independently
+    } else {
+      context.read<CustomerBloc>().add(FetchCustomers());
+      context.read<VehicleListBloc>().add(const FetchVehiclesList());
+      context.read<VisitListBloc>().add(FetchVisitsList());
+    }
   }
 
   void _handleLogout() {
