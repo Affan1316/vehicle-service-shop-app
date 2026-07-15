@@ -7,7 +7,10 @@ import '../../features/job/domain/usecases/create_work_order.dart';
 import '../../features/job/domain/usecases/get_work_orders.dart';
 import '../../features/job/domain/usecases/update_line_item.dart';
 import '../../features/job/domain/usecases/update_work_order.dart';
+import '../../features/job/domain/usecases/create_labor_entry_usecase.dart';
+import '../../features/job/domain/usecases/get_labor_entries_usecase.dart';
 import '../../features/job/presentation/bloc/job_bloc.dart';
+import '../../features/job/presentation/bloc/labor_bloc.dart';
 
 final sl = GetIt.instance;
 
@@ -28,6 +31,8 @@ void initJob() {
   sl.registerLazySingleton<UpdateWorkOrderUseCase>(() => UpdateWorkOrderUseCase(sl()));
   sl.registerLazySingleton<CreateLineItemUseCase>(() => CreateLineItemUseCase(sl()));
   sl.registerLazySingleton<UpdateLineItemUseCase>(() => UpdateLineItemUseCase(sl()));
+  sl.registerLazySingleton<CreateLaborEntryUseCase>(() => CreateLaborEntryUseCase(sl()));
+  sl.registerLazySingleton<GetLaborEntriesUseCase>(() => GetLaborEntriesUseCase(sl()));
 
   // BLoCs
   sl.registerFactory<JobBloc>(
@@ -39,6 +44,12 @@ void initJob() {
       updateLineItemUseCase: sl(),
       getCustomersUseCase: sl(),
       getVehiclesUseCase: sl(),
+    ),
+  );
+  sl.registerFactory<LaborBloc>(
+    () => LaborBloc(
+      createLaborEntryUseCase: sl(),
+      getLaborEntriesUseCase: sl(),
     ),
   );
 }

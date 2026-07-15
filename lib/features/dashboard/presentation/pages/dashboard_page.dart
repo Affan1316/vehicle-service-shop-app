@@ -25,7 +25,16 @@ import '../../../vehicle/domain/usecases/get_vehicles_by_customer_usecase.dart';
 import '../../../visit/domain/usecases/get_visits_usecase.dart';
 import '../../../quote/domain/entities/quote.dart';
 import '../../../billing/domain/entities/invoice.dart';
+import '../../../billing/presentation/bloc/billing_bloc.dart';
+import '../../../billing/presentation/bloc/billing_event.dart';
+import '../../../billing/presentation/bloc/billing_state.dart';
 import '../../../vehicle/domain/entities/vehicle.dart';
+import '../../../resource/presentation/widgets/bay_board_widget.dart';
+import '../../../job/presentation/widgets/tech_job_queue_widget.dart';
+import '../../../resource/presentation/bloc/bay_bloc.dart';
+import '../../../resource/presentation/bloc/bay_event.dart';
+import '../../../job/presentation/bloc/job_bloc.dart';
+import '../../../job/presentation/bloc/job_event.dart';
 
 class DashboardPage extends StatefulWidget {
   const DashboardPage({super.key});
@@ -113,14 +122,27 @@ class _DashboardPageState extends State<DashboardPage> {
   @override
   void initState() {
     super.initState();
-    // Dispatch fetch events to populate dashboard metrics if user is not a customer
+    // Dispatch fetch events to populate dashboard metrics based on user role
     final authState = context.read<AuthBloc>().state;
-    if (authState is Authenticated && authState.user.role == 'customer') {
-      // Customer dashboard fetches its own data independently
-    } else {
-      context.read<CustomerBloc>().add(FetchCustomers());
-      context.read<VehicleListBloc>().add(const FetchVehiclesList());
-      context.read<VisitListBloc>().add(FetchVisitsList());
+    if (authState is Authenticated) {
+      final role = authState.user.role;
+      if (role == 'customer') {
+        // Customer dashboard fetches its own data independently
+      } else if (role == 'technician') {
+        context.read<CustomerBloc>().add(FetchCustomers());
+        context.read<VehicleListBloc>().add(const FetchVehiclesList());
+        context.read<VisitListBloc>().add(FetchVisitsList());
+        context.read<BayBloc>().add(const FetchBays());
+        context.read<JobBloc>().add(const FetchWorkOrders());
+      } else {
+        // Manager / Advisor
+        context.read<CustomerBloc>().add(FetchCustomers());
+        context.read<VehicleListBloc>().add(const FetchVehiclesList());
+        context.read<VisitListBloc>().add(FetchVisitsList());
+        context.read<BillingBloc>().add(const FetchInvoices());
+        context.read<BayBloc>().add(const FetchBays());
+        context.read<JobBloc>().add(const FetchWorkOrders());
+      }
     }
   }
 
@@ -209,6 +231,7 @@ class _DashboardPageState extends State<DashboardPage> {
                 context.read<CustomerBloc>().add(FetchCustomers());
                 context.read<VehicleListBloc>().add(const FetchVehiclesList());
                 context.read<VisitListBloc>().add(FetchVisitsList());
+                context.read<BillingBloc>().add(const FetchInvoices(forceRefresh: true));
               },
               color: AppColors.primary,
               backgroundColor: AppColors.bgSurface,
@@ -234,17 +257,26 @@ class _DashboardPageState extends State<DashboardPage> {
                       const SizedBox(height: 32),
                       _buildShortcutsSection(isDesktop, isTablet, role),
                       const SizedBox(height: 32),
+                      const BayBoardWidget(),
+                      const SizedBox(height: 32),
                       if (isDesktop)
                         Row(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            Expanded(flex: 3, child: _buildLiveMonitorSection()),
+                            Expanded(
+                              flex: 3,
+                              child: role == 'technician'
+                                  ? const TechJobQueueWidget()
+                                  : _buildLiveMonitorSection(),
+                            ),
                             const SizedBox(width: 24),
                             Expanded(flex: 2, child: _buildComingSoonSidebar(role)),
                           ],
                         )
                       else ...[
-                        _buildLiveMonitorSection(),
+                        role == 'technician'
+                            ? const TechJobQueueWidget()
+                            : _buildLiveMonitorSection(),
                         const SizedBox(height: 32),
                         _buildComingSoonSidebar(role),
                       ],
@@ -370,140 +402,152 @@ class _DashboardPageState extends State<DashboardPage> {
           builder: (context, vehState) {
             return BlocBuilder<VisitListBloc, VisitListState>(
               builder: (context, visitState) {
-                // Determine counts
-                String activeVisitsCount = '...';
-                int activeCountInt = 0;
-                int diagnosisCountInt = 0;
-                int serviceCountInt = 0;
-                int awaitingPickupCountInt = 0;
+                return BlocBuilder<BillingBloc, BillingState>(
+                  builder: (context, billingState) {
+                    // Determine counts
+                    String activeVisitsCount = '...';
+                    int activeCountInt = 0;
+                    int diagnosisCountInt = 0;
+                    int serviceCountInt = 0;
+                    int awaitingPickupCountInt = 0;
 
-                if (visitState is VisitListLoaded) {
-                  final active = visitState.visits
-                      .where((v) => v.status != 'completed' && v.checkedOutAt == null);
-                  activeVisitsCount = active.length.toString();
-                  activeCountInt = active.length;
+                    if (visitState is VisitListLoaded) {
+                      final active = visitState.visits
+                          .where((v) => v.status != 'completed' && v.checkedOutAt == null);
+                      activeVisitsCount = active.length.toString();
+                      activeCountInt = active.length;
 
-                  diagnosisCountInt = visitState.visits
-                      .where((v) => v.status == 'in_diagnosis')
-                      .length;
-                  serviceCountInt = visitState.visits
-                      .where((v) => v.status == 'in_service')
-                      .length;
-                  awaitingPickupCountInt = visitState.visits
-                      .where((v) => v.status == 'awaiting_pickup')
-                      .length;
-                }
+                      diagnosisCountInt = visitState.visits
+                          .where((v) => v.status == 'in_diagnosis')
+                          .length;
+                      serviceCountInt = visitState.visits
+                          .where((v) => v.status == 'in_service')
+                          .length;
+                      awaitingPickupCountInt = visitState.visits
+                          .where((v) => v.status == 'awaiting_pickup')
+                          .length;
+                    }
 
-                String customerCount = '...';
-                if (custState is CustomersLoaded) {
-                  customerCount = custState.customers.length.toString();
-                }
+                    String customerCount = '...';
+                    if (custState is CustomersLoaded) {
+                      customerCount = custState.customers.length.toString();
+                    }
 
-                String vehicleCount = '...';
-                if (vehState is VehicleListLoaded) {
-                  vehicleCount = vehState.vehicles.length.toString();
-                }
+                    String vehicleCount = '...';
+                    if (vehState is VehicleListLoaded) {
+                      vehicleCount = vehState.vehicles.length.toString();
+                    }
 
-                List<Widget> cards = [];
+                    String revenueStr = '\$0';
+                    if (billingState is InvoicesLoaded) {
+                      double collected = 0.0;
+                      for (var inv in billingState.invoices) {
+                        collected += (inv.amountDue - inv.totalBalance);
+                      }
+                      revenueStr = '\$${collected.toStringAsFixed(0)}';
+                    }
 
-                if (role == 'technician') {
-                  cards = [
-                    _buildStatCard(
-                      'IN DIAGNOSTICS',
-                      diagnosisCountInt.toString(),
-                      LucideIcons.search,
-                      AppColors.warningBorder,
-                    ),
-                    _buildStatCard(
-                      'IN SERVICE',
-                      serviceCountInt.toString(),
-                      LucideIcons.wrench,
-                      Colors.indigoAccent,
-                    ),
-                    _buildStatCard(
-                      'AWAITING PICKUP',
-                      awaitingPickupCountInt.toString(),
-                      LucideIcons.checkCheck,
-                      Colors.tealAccent,
-                    ),
-                    _buildStatCard(
-                      'ACTIVE FLOOR LOAD',
-                      activeCountInt.toString(),
-                      LucideIcons.clipboardClock,
-                      AppColors.primary,
-                    ),
-                  ];
-                } else if (role == 'advisor') {
-                  int pendingQueueCount = 0;
-                  if (visitState is VisitListLoaded) {
-                    pendingQueueCount = visitState.visits
-                        .where((v) => v.status == 'checked_in' || v.status == 'in_diagnosis')
-                        .length;
-                  }
-                  cards = [
-                    _buildStatCard(
-                      'ACTIVE CHECK-INS',
-                      activeVisitsCount,
-                      LucideIcons.clipboardClock,
-                      AppColors.primary,
-                    ),
-                    _buildStatCard(
-                      'PENDING QUEUE',
-                      pendingQueueCount.toString(),
-                      LucideIcons.circleDashed,
-                      AppColors.warningBorder,
-                    ),
-                    _buildStatCard(
-                      'CUSTOMERS',
-                      customerCount,
-                      LucideIcons.users,
-                      AppColors.infoBorder,
-                    ),
-                    _buildStatCard(
-                      'VEHICLE FLEET',
-                      vehicleCount,
-                      LucideIcons.car,
-                      AppColors.successBorder,
-                    ),
-                  ];
-                } else {
-                  cards = [
-                    _buildStatCard(
-                      'ACTIVE CHECK-INS',
-                      activeVisitsCount,
-                      LucideIcons.clipboardClock,
-                      AppColors.primary,
-                    ),
-                    _buildStatCard(
-                      'CUSTOMERS',
-                      customerCount,
-                      LucideIcons.users,
-                      AppColors.infoBorder,
-                    ),
-                    _buildStatCard(
-                      'VEHICLE FLEET',
-                      vehicleCount,
-                      LucideIcons.car,
-                      AppColors.successBorder,
-                    ),
-                    _buildStatCard(
-                      'TODAY\'S REVENUE',
-                      '\$4,850',
-                      LucideIcons.circleDollarSign,
-                      Colors.purpleAccent,
-                      isComingSoon: true,
-                    ),
-                  ];
-                }
+                    List<Widget> cards = [];
 
-                return GridView.count(
-                  crossAxisCount: crossAxisCount,
-                  crossAxisSpacing: 16,
-                  mainAxisSpacing: 16,
-                  shrinkWrap: true,
-                  physics: const NeverScrollableScrollPhysics(),
-                  childAspectRatio: isDesktop ? 1.4 : 2.5,
-                  children: cards,
+                    if (role == 'technician') {
+                      cards = [
+                        _buildStatCard(
+                          'IN DIAGNOSTICS',
+                          diagnosisCountInt.toString(),
+                          LucideIcons.search,
+                          AppColors.warningBorder,
+                        ),
+                        _buildStatCard(
+                          'IN SERVICE',
+                          serviceCountInt.toString(),
+                          LucideIcons.wrench,
+                          Colors.indigoAccent,
+                        ),
+                        _buildStatCard(
+                          'AWAITING PICKUP',
+                          awaitingPickupCountInt.toString(),
+                          LucideIcons.checkCheck,
+                          Colors.tealAccent,
+                        ),
+                        _buildStatCard(
+                          'ACTIVE FLOOR LOAD',
+                          activeCountInt.toString(),
+                          LucideIcons.clipboardClock,
+                          AppColors.primary,
+                        ),
+                      ];
+                    } else if (role == 'advisor') {
+                      int pendingQueueCount = 0;
+                      if (visitState is VisitListLoaded) {
+                        pendingQueueCount = visitState.visits
+                            .where((v) => v.status == 'checked_in' || v.status == 'in_diagnosis')
+                            .length;
+                      }
+                      cards = [
+                        _buildStatCard(
+                          'ACTIVE CHECK-INS',
+                          activeVisitsCount,
+                          LucideIcons.clipboardClock,
+                          AppColors.primary,
+                        ),
+                        _buildStatCard(
+                          'PENDING QUEUE',
+                          pendingQueueCount.toString(),
+                          LucideIcons.circleDashed,
+                          AppColors.warningBorder,
+                        ),
+                        _buildStatCard(
+                          'CUSTOMERS',
+                          customerCount,
+                          LucideIcons.users,
+                          AppColors.infoBorder,
+                        ),
+                        _buildStatCard(
+                          'VEHICLE FLEET',
+                          vehicleCount,
+                          LucideIcons.car,
+                          AppColors.successBorder,
+                        ),
+                      ];
+                    } else {
+                      cards = [
+                        _buildStatCard(
+                          'ACTIVE CHECK-INS',
+                          activeVisitsCount,
+                          LucideIcons.clipboardClock,
+                          AppColors.primary,
+                        ),
+                        _buildStatCard(
+                          'CUSTOMERS',
+                          customerCount,
+                          LucideIcons.users,
+                          AppColors.infoBorder,
+                        ),
+                        _buildStatCard(
+                          'VEHICLE FLEET',
+                          vehicleCount,
+                          LucideIcons.car,
+                          AppColors.successBorder,
+                        ),
+                        _buildStatCard(
+                          'COLLECTED REVENUE',
+                          revenueStr,
+                          LucideIcons.circleDollarSign,
+                          Colors.purpleAccent,
+                        ),
+                      ];
+                    }
+
+                    return GridView.count(
+                      crossAxisCount: crossAxisCount,
+                      crossAxisSpacing: 16,
+                      mainAxisSpacing: 16,
+                      shrinkWrap: true,
+                      physics: const NeverScrollableScrollPhysics(),
+                      childAspectRatio: isDesktop ? 1.4 : 2.5,
+                      children: cards,
+                    );
+                  },
                 );
               },
             );
@@ -1413,57 +1457,190 @@ class _DashboardPageState extends State<DashboardPage> {
                   borderRadius: BorderRadius.circular(12),
                   border: Border.all(color: AppColors.borderDefault),
                 ),
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                child: Column(
                   children: [
-                    Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
-                        Text(
-                          'Invoice: WO-${invoice.workOrderId.substring(0, 5).toUpperCase()}',
-                          style: AppTypography.bodyMedium.copyWith(fontWeight: FontWeight.bold),
+                        Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              'Invoice: WO-${invoice.workOrderId.substring(0, 5).toUpperCase()}',
+                              style: AppTypography.bodyMedium.copyWith(fontWeight: FontWeight.bold),
+                            ),
+                            const SizedBox(height: 4),
+                            Text(
+                              'Issued: ${invoice.issuedAt.year}-${invoice.issuedAt.month.toString().padLeft(2, '0')}-${invoice.issuedAt.day.toString().padLeft(2, '0')}',
+                              style: AppTypography.bodySmall.copyWith(color: AppColors.textDisabled),
+                            ),
+                          ],
                         ),
-                        const SizedBox(height: 4),
-                        Text(
-                          'Issued: ${invoice.issuedAt.year}-${invoice.issuedAt.month.toString().padLeft(2, '0')}-${invoice.issuedAt.day.toString().padLeft(2, '0')}',
-                          style: AppTypography.bodySmall.copyWith(color: AppColors.textDisabled),
+                        Column(
+                          crossAxisAlignment: CrossAxisAlignment.end,
+                          children: [
+                            Text(
+                              '\$${invoice.amountDue.toStringAsFixed(2)}',
+                              style: AppTypography.bodyMedium.copyWith(
+                                color: AppColors.textPrimary,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                            const SizedBox(height: 4),
+                            Container(
+                              padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                              decoration: BoxDecoration(
+                                color: (isPaid ? AppColors.successBorder : Colors.orangeAccent).withOpacity(0.15),
+                                borderRadius: BorderRadius.circular(4),
+                              ),
+                              child: Text(
+                                invoice.status.toUpperCase(),
+                                style: TextStyle(
+                                  color: isPaid ? AppColors.successBorder : Colors.orangeAccent,
+                                  fontSize: 9,
+                                  fontWeight: FontWeight.bold,
+                                ),
+                              ),
+                            ),
+                          ],
                         ),
                       ],
                     ),
-                    Column(
-                      crossAxisAlignment: CrossAxisAlignment.end,
-                      children: [
-                        Text(
-                          '\$${invoice.amountDue.toStringAsFixed(2)}',
-                          style: AppTypography.bodyMedium.copyWith(
-                            color: AppColors.textPrimary,
-                            fontWeight: FontWeight.bold,
-                          ),
-                        ),
-                        const SizedBox(height: 4),
-                        Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-                          decoration: BoxDecoration(
-                            color: (isPaid ? AppColors.successBorder : Colors.orangeAccent).withOpacity(0.15),
-                            borderRadius: BorderRadius.circular(4),
-                          ),
-                          child: Text(
-                            invoice.status.toUpperCase(),
-                            style: TextStyle(
-                              color: isPaid ? AppColors.successBorder : Colors.orangeAccent,
-                              fontSize: 9,
-                              fontWeight: FontWeight.bold,
+                    if (!isPaid) ...[
+                      const SizedBox(height: 12),
+                      const Divider(color: AppColors.borderDefault, height: 1),
+                      const SizedBox(height: 12),
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.end,
+                        children: [
+                          ElevatedButton.icon(
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: AppColors.primary,
+                              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                            ),
+                            onPressed: () => _showOnlineCheckoutDialog(context, invoice),
+                            icon: const Icon(LucideIcons.creditCard, size: 14, color: Colors.white),
+                            label: const Text(
+                              'Pay Bill',
+                              style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
                             ),
                           ),
-                        ),
-                      ],
-                    ),
+                        ],
+                      ),
+                    ],
                   ],
                 ),
               );
             },
           ),
       ],
+    );
+  }
+
+  void _showOnlineCheckoutDialog(BuildContext context, Invoice invoice) {
+    final billingBloc = context.read<BillingBloc>();
+    final authState = context.read<AuthBloc>().state;
+    final customerId = authState is Authenticated ? authState.user.customerId : null;
+
+    showDialog(
+      context: context,
+      builder: (dialogContext) {
+        return AlertDialog(
+          backgroundColor: AppColors.bgSurface,
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+          title: Row(
+            children: [
+              const Icon(LucideIcons.shieldCheck, color: AppColors.successText),
+              const SizedBox(width: 12),
+              Text(
+                'Secure Checkout',
+                style: AppTypography.headingSmall.copyWith(color: AppColors.textPrimary),
+              ),
+            ],
+          ),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                'Outstanding Balance:',
+                style: AppTypography.bodySmall.copyWith(color: AppColors.textSecondary),
+              ),
+              Text(
+                '\$${invoice.totalBalance.toStringAsFixed(2)}',
+                style: AppTypography.displayMedium.copyWith(
+                  color: AppColors.textPrimary,
+                  fontSize: 28,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+              const SizedBox(height: 16),
+              Text(
+                'Mock Payment Method:',
+                style: AppTypography.bodySmall.copyWith(color: AppColors.textSecondary),
+              ),
+              const SizedBox(height: 8),
+              Container(
+                padding: const EdgeInsets.all(12),
+                decoration: BoxDecoration(
+                  color: AppColors.bgElevated,
+                  borderRadius: BorderRadius.circular(8),
+                  border: Border.all(color: AppColors.borderDefault),
+                ),
+                child: Row(
+                  children: [
+                    const Icon(LucideIcons.creditCard, color: AppColors.primary),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            'Simulated Visa ending in 4242',
+                            style: AppTypography.bodyMedium.copyWith(color: AppColors.textPrimary, fontWeight: FontWeight.bold),
+                          ),
+                          Text(
+                            'Expiry 12/28 • Secure Sandbox',
+                            style: AppTypography.bodySmall.copyWith(color: AppColors.textSecondary),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(dialogContext),
+              child: const Text('Cancel', style: TextStyle(color: AppColors.textSecondary)),
+            ),
+            ElevatedButton(
+              style: ElevatedButton.styleFrom(backgroundColor: AppColors.primary),
+              onPressed: () {
+                billingBloc.add(
+                  RecordPaymentEvent(
+                    invoiceId: invoice.invoiceId,
+                    amount: invoice.totalBalance,
+                    method: 'credit_card',
+                  ),
+                );
+                
+                Navigator.pop(dialogContext);
+
+                // Reload customer data if customerId is valid
+                if (customerId != null) {
+                  Future.delayed(const Duration(milliseconds: 350), () {
+                    _loadCustomerData(customerId);
+                  });
+                }
+              },
+              child: const Text('Pay Billed Balance', style: TextStyle(color: Colors.white)),
+            ),
+          ],
+        );
+      },
     );
   }
 
@@ -1497,6 +1674,7 @@ class _DashboardPageState extends State<DashboardPage> {
                   'Online Bill Pay',
                   'Secure checkout using credit card, Apple Pay, or Google Pay directly from this portal.',
                   LucideIcons.creditCard,
+                  isActive: true,
                 ),
                 _buildUpcomingCard(
                   'Book Appointments',
@@ -1516,18 +1694,20 @@ class _DashboardPageState extends State<DashboardPage> {
     );
   }
 
-  Widget _buildUpcomingCard(String title, String description, IconData icon) {
+  Widget _buildUpcomingCard(String title, String description, IconData icon, {bool isActive = false}) {
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: AppColors.bgSurface.withOpacity(0.6),
+        color: AppColors.bgSurface.withValues(alpha: isActive ? 1.0 : 0.6),
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: AppColors.borderDefault.withOpacity(0.5)),
+        border: Border.all(
+          color: isActive ? AppColors.successBorder : AppColors.borderDefault,
+        ),
       ),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Icon(icon, size: 20, color: AppColors.textDisabled),
+          Icon(icon, size: 20, color: isActive ? AppColors.successBorder : AppColors.textDisabled),
           const SizedBox(width: 12),
           Expanded(
             child: Column(
@@ -1541,7 +1721,7 @@ class _DashboardPageState extends State<DashboardPage> {
                       child: Text(
                         title,
                         style: AppTypography.bodyMedium.copyWith(
-                          color: AppColors.textSecondary,
+                          color: isActive ? AppColors.textPrimary : AppColors.textSecondary,
                           fontWeight: FontWeight.bold,
                         ),
                         overflow: TextOverflow.ellipsis,
@@ -1550,13 +1730,13 @@ class _DashboardPageState extends State<DashboardPage> {
                     Container(
                       padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 1),
                       decoration: BoxDecoration(
-                        color: AppColors.textDisabled.withOpacity(0.15),
+                        color: (isActive ? AppColors.successBg : AppColors.textDisabled).withValues(alpha: 0.15),
                         borderRadius: BorderRadius.circular(3),
                       ),
                       child: Text(
-                        'SOON',
+                        isActive ? 'ACTIVE' : 'SOON',
                         style: AppTypography.monospace.copyWith(
-                          color: AppColors.textDisabled,
+                          color: isActive ? AppColors.successText : AppColors.textDisabled,
                           fontSize: 8,
                           fontWeight: FontWeight.bold,
                         ),
@@ -1565,12 +1745,13 @@ class _DashboardPageState extends State<DashboardPage> {
                   ],
                 ),
                 const SizedBox(height: 6),
-                Expanded(
-                  child: Text(
-                    description,
-                    style: AppTypography.bodySmall.copyWith(color: AppColors.textDisabled, fontSize: 11),
-                    overflow: TextOverflow.fade,
+                Text(
+                  description,
+                  style: AppTypography.bodySmall.copyWith(
+                    color: isActive ? AppColors.textPrimary : AppColors.textDisabled,
+                    fontSize: 11,
                   ),
+                  overflow: TextOverflow.fade,
                 ),
               ],
             ),

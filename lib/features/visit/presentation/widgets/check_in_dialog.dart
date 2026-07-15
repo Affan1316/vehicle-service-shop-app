@@ -7,6 +7,9 @@ import '../../../customer/domain/entities/customer.dart';
 import '../../../customer/domain/usecases/get_customers_usecase.dart';
 import '../../../vehicle/domain/entities/vehicle.dart';
 import '../../../vehicle/domain/usecases/get_vehicles_usecase.dart';
+import '../../../resource/domain/entities/bay.dart';
+import '../../../resource/domain/usecases/get_bays_usecase.dart';
+import '../../../resource/domain/usecases/update_bay_usecase.dart';
 
 class CheckInDialog extends StatefulWidget {
   final Function({
@@ -26,9 +29,11 @@ class _CheckInDialogState extends State<CheckInDialog> {
   List<Customer> _customers = [];
   List<Vehicle> _vehicles = [];
   List<Vehicle> _filteredVehicles = [];
+  List<Bay> _bays = [];
 
   String? _selectedCustomerId;
   String? _selectedVehicleId;
+  String? _selectedBayId;
   bool _isLoading = true;
   String? _errorMessage;
 
@@ -42,6 +47,7 @@ class _CheckInDialogState extends State<CheckInDialog> {
     try {
       final customersRes = await sl<GetCustomersUseCase>().call(limit: 100);
       final vehiclesRes = await sl<GetVehiclesUseCase>().call(limit: 100);
+      final baysRes = await sl<GetBaysUseCase>().call(limit: 100);
 
       customersRes.fold(
         (failure) => setState(() => _errorMessage = failure.message),
@@ -54,6 +60,13 @@ class _CheckInDialogState extends State<CheckInDialog> {
         (failure) => setState(() => _errorMessage = failure.message),
         (vehicles) {
           _vehicles = vehicles;
+        },
+      );
+
+      baysRes.fold(
+        (failure) => null, // Non-blocking
+        (bays) {
+          _bays = bays.where((b) => b.status == 'available').toList();
         },
       );
     } catch (e) {
@@ -176,6 +189,35 @@ class _CheckInDialogState extends State<CheckInDialog> {
                             ),
                           ),
                         ),
+                      const SizedBox(height: 20),
+                      Text(
+                        'Select Service Bay (Optional)',
+                        style: AppTypography.bodyMedium.copyWith(
+                          color: AppColors.textSecondary,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                      const SizedBox(height: 8),
+                      DropdownButtonFormField<String>(
+                        value: _selectedBayId,
+                        dropdownColor: AppColors.bgSurface,
+                        style: AppTypography.bodyLarge.copyWith(color: AppColors.textPrimary),
+                        decoration: InputDecoration(
+                          hintText: _bays.isEmpty
+                              ? 'No available bays'
+                              : 'Choose a physical bay for check-in...',
+                          hintStyle: TextStyle(color: AppColors.textSecondary),
+                        ),
+                        items: _bays.map((b) {
+                          return DropdownMenuItem<String>(
+                            value: b.bayId,
+                            child: Text('${b.bayType} (ID: ${b.bayId.substring(0, 5).toUpperCase()})'),
+                          );
+                        }).toList(),
+                        onChanged: (val) {
+                          setState(() => _selectedBayId = val);
+                        },
+                      ),
                       const SizedBox(height: 28),
                       Row(
                         children: [
@@ -193,13 +235,20 @@ class _CheckInDialogState extends State<CheckInDialog> {
                               onPressed: (_selectedCustomerId == null ||
                                       _selectedVehicleId == null)
                                   ? null
-                                  : () {
+                                  : () async {
                                       if (_formKey.currentState?.validate() ?? false) {
+                                        final nav = Navigator.of(context);
+                                        if (_selectedBayId != null) {
+                                          await sl<UpdateBayUseCase>().call(
+                                            _selectedBayId!,
+                                            status: 'held',
+                                          );
+                                        }
                                         widget.onSubmit(
                                           vehicleId: _selectedVehicleId!,
                                           customerId: _selectedCustomerId!,
                                         );
-                                        Navigator.pop(context);
+                                        nav.pop();
                                       }
                                     },
                             ),

@@ -2,6 +2,7 @@ import 'package:dartz/dartz.dart';
 import '../../../../core/error/failures.dart';
 import '../entities/work_order.dart';
 import '../entities/line_item.dart';
+import '../entities/labor_entry.dart';
 
 abstract class JobRepository {
   Future<Either<Failure, List<WorkOrder>>> getWorkOrders({int limit = 100, int offset = 0});
@@ -46,4 +47,14 @@ abstract class JobRepository {
     DateTime? startedAt,
     DateTime? completedAt,
   });
+
+  Future<Either<Failure, LaborEntry>> createLaborEntry(
+    String workOrderId, {
+    required String techId,
+    required String lineItemId,
+    required DateTime workDate,
+    required double hours,
+  });
+
+  Future<Either<Failure, List<LaborEntry>>> getLaborEntries(String workOrderId);
 }

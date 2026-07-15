@@ -48,7 +48,10 @@ class _CreateInvoiceDialogState extends State<CreateInvoiceDialog> {
         (failure) => setState(() => _errorMessage = failure.message),
         (orders) {
           setState(() {
-            _completedOrders = orders.where((o) => o.status.toLowerCase() == 'completed').toList();
+            _completedOrders = orders.where((o) {
+              final s = o.status.toLowerCase();
+              return s == 'closed' || s == 'completed';
+            }).toList();
           });
         },
       );

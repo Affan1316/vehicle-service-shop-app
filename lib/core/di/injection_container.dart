@@ -17,6 +17,7 @@ import 'visit_module.dart';
 import 'job_module.dart';
 import 'quote_module.dart';
 import 'billing_module.dart';
+import 'resource_module.dart';
 
 final sl = GetIt.instance;
 
@@ -47,4 +48,5 @@ Future<void> init() async {
   initJob();
   initQuote();
   initBilling();
+  initResource();
 }

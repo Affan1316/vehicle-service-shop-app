@@ -1,5 +1,6 @@
 import 'package:dio/dio.dart';
 import '../constants/api_endpoints.dart';
+import '../error/exceptions.dart';
 import 'auth_interceptor.dart';
 import 'error_interceptor.dart';
 import 'retry_interceptor.dart';
@@ -29,12 +30,19 @@ class ApiClient {
     String path, {
     Map<String, dynamic>? queryParameters,
     Options? options,
-  }) {
-    return _dio.get<T>(
-      path,
-      queryParameters: queryParameters,
-      options: options,
-    );
+  }) async {
+    try {
+      return await _dio.get<T>(
+        path,
+        queryParameters: queryParameters,
+        options: options,
+      );
+    } on DioException catch (e) {
+      if (e.error is Exception) {
+        throw e.error as Exception;
+      }
+      rethrow;
+    }
   }
 
   Future<Response<T>> post<T>(
@@ -42,13 +50,20 @@ class ApiClient {
     dynamic data,
     Map<String, dynamic>? queryParameters,
     Options? options,
-  }) {
-    return _dio.post<T>(
-      path,
-      data: data,
-      queryParameters: queryParameters,
-      options: options,
-    );
+  }) async {
+    try {
+      return await _dio.post<T>(
+        path,
+        data: data,
+        queryParameters: queryParameters,
+        options: options,
+      );
+    } on DioException catch (e) {
+      if (e.error is Exception) {
+        throw e.error as Exception;
+      }
+      rethrow;
+    }
   }
 
   Future<Response<T>> put<T>(
@@ -56,13 +71,20 @@ class ApiClient {
     dynamic data,
     Map<String, dynamic>? queryParameters,
     Options? options,
-  }) {
-    return _dio.put<T>(
-      path,
-      data: data,
-      queryParameters: queryParameters,
-      options: options,
-    );
+  }) async {
+    try {
+      return await _dio.put<T>(
+        path,
+        data: data,
+        queryParameters: queryParameters,
+        options: options,
+      );
+    } on DioException catch (e) {
+      if (e.error is Exception) {
+        throw e.error as Exception;
+      }
+      rethrow;
+    }
   }
 
   Future<Response<T>> delete<T>(
@@ -70,12 +92,19 @@ class ApiClient {
     dynamic data,
     Map<String, dynamic>? queryParameters,
     Options? options,
-  }) {
-    return _dio.delete<T>(
-      path,
-      data: data,
-      queryParameters: queryParameters,
-      options: options,
-    );
+  }) async {
+    try {
+      return await _dio.delete<T>(
+        path,
+        data: data,
+        queryParameters: queryParameters,
+        options: options,
+      );
+    } on DioException catch (e) {
+      if (e.error is Exception) {
+        throw e.error as Exception;
+      }
+      rethrow;
+    }
   }
 }

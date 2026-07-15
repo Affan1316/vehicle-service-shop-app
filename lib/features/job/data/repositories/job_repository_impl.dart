@@ -4,6 +4,7 @@ import '../../../../core/error/failures.dart';
 import '../../../../core/network/network_info.dart';
 import '../../domain/entities/work_order.dart';
 import '../../domain/entities/line_item.dart';
+import '../../domain/entities/labor_entry.dart';
 import '../../domain/repositories/job_repository.dart';
 import '../datasources/job_remote_datasource.dart';
 
@@ -155,6 +156,52 @@ class JobRepositoryImpl implements JobRepository {
         completedAt: completedAt,
       );
       return Right(lineItem);
+    } on ValidationException catch (e) {
+      return Left(ValidationFailure(e.message));
+    } on ServerException catch (e) {
+      return Left(ServerFailure(e.message));
+    } catch (e) {
+      return Left(ServerFailure(e.toString()));
+    }
+  }
+
+  @override
+  Future<Either<Failure, LaborEntry>> createLaborEntry(
+    String workOrderId, {
+    required String techId,
+    required String lineItemId,
+    required DateTime workDate,
+    required double hours,
+  }) async {
+    if (!await _networkInfo.isConnected) {
+      return const Left(ServerFailure('No internet connection'));
+    }
+    try {
+      final laborEntry = await _remoteDataSource.createLaborEntry(
+        workOrderId,
+        techId: techId,
+        lineItemId: lineItemId,
+        workDate: workDate,
+        hours: hours,
+      );
+      return Right(laborEntry);
+    } on ValidationException catch (e) {
+      return Left(ValidationFailure(e.message));
+    } on ServerException catch (e) {
+      return Left(ServerFailure(e.message));
+    } catch (e) {
+      return Left(ServerFailure(e.toString()));
+    }
+  }
+
+  @override
+  Future<Either<Failure, List<LaborEntry>>> getLaborEntries(String workOrderId) async {
+    if (!await _networkInfo.isConnected) {
+      return const Left(ServerFailure('No internet connection'));
+    }
+    try {
+      final entries = await _remoteDataSource.getLaborEntries(workOrderId);
+      return Right(entries);
     } on ValidationException catch (e) {
       return Left(ValidationFailure(e.message));
     } on ServerException catch (e) {

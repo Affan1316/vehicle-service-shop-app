@@ -1,6 +1,7 @@
 import '../../../../core/network/api_client.dart';
 import '../models/work_order_model.dart';
 import '../models/line_item_model.dart';
+import '../models/labor_entry_model.dart';
 
 abstract class JobRemoteDataSource {
   Future<List<WorkOrderModel>> getWorkOrders({int limit = 100, int offset = 0});
@@ -45,6 +46,16 @@ abstract class JobRemoteDataSource {
     DateTime? startedAt,
     DateTime? completedAt,
   });
+
+  Future<LaborEntryModel> createLaborEntry(
+    String workOrderId, {
+    required String techId,
+    required String lineItemId,
+    required DateTime workDate,
+    required double hours,
+  });
+
+  Future<List<LaborEntryModel>> getLaborEntries(String workOrderId);
 }
 
 class JobRemoteDataSourceImpl implements JobRemoteDataSource {
@@ -172,5 +183,36 @@ class JobRemoteDataSourceImpl implements JobRemoteDataSource {
       data: body,
     );
     return LineItemModel.fromJson(response.data as Map<String, dynamic>);
+  }
+
+  @override
+  Future<LaborEntryModel> createLaborEntry(
+    String workOrderId, {
+    required String techId,
+    required String lineItemId,
+    required DateTime workDate,
+    required double hours,
+  }) async {
+    final Map<String, dynamic> body = {
+      'tech_id': techId,
+      'line_item_id': lineItemId,
+      'work_date': '${workDate.year.toString().padLeft(4, '0')}-${workDate.month.toString().padLeft(2, '0')}-${workDate.day.toString().padLeft(2, '0')}',
+      'hours': hours,
+    };
+
+    final response = await _client.post(
+      '/work-orders/$workOrderId/labor-entries',
+      data: body,
+    );
+    return LaborEntryModel.fromJson(response.data as Map<String, dynamic>);
+  }
+
+  @override
+  Future<List<LaborEntryModel>> getLaborEntries(String workOrderId) async {
+    final response = await _client.get(
+      '/work-orders/$workOrderId/labor-entries',
+    );
+    final list = response.data as List<dynamic>;
+    return list.map((item) => LaborEntryModel.fromJson(item as Map<String, dynamic>)).toList();
   }
 }

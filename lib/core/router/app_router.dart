@@ -11,6 +11,7 @@ import '../../features/vehicle/presentation/pages/vehicle_list_page.dart';
 import '../../features/visit/presentation/bloc/visit_list_bloc.dart';
 import '../../features/visit/presentation/pages/visit_list_page.dart';
 import '../../features/job/presentation/bloc/job_bloc.dart';
+import '../../features/job/presentation/bloc/job_event.dart';
 import '../../features/job/presentation/pages/work_orders_list_page.dart';
 import '../../features/job/presentation/pages/work_order_detail_page.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
@@ -22,6 +23,8 @@ import '../../features/quote/presentation/bloc/quote_bloc.dart';
 import '../../features/quote/presentation/pages/quotes_list_page.dart';
 import '../../features/billing/presentation/bloc/billing_bloc.dart';
 import '../../features/billing/presentation/pages/billing_page.dart';
+import '../../features/resource/presentation/bloc/bay_bloc.dart';
+import '../../features/job/presentation/bloc/labor_bloc.dart';
 import 'route_names.dart';
 
 class AppRouter {
@@ -32,23 +35,17 @@ class AppRouter {
   late final GoRouter router = GoRouter(
     initialLocation: RouteNames.dashboardPath,
     refreshListenable: _GoRouterRefreshStream(authBloc.stream),
-    redirect: (BuildContext context, GoRouterState state) {
+    redirect: (context, state) {
       final authState = authBloc.state;
-      final isLoggingIn = state.matchedLocation == RouteNames.loginPath;
-      final isRegistering = state.matchedLocation == RouteNames.registerPath;
+      final isLoggingIn = state.matchedLocation == RouteNames.loginPath ||
+          state.matchedLocation == RouteNames.registerPath;
 
-      if (authState is AuthInitial || authState is AuthLoading) {
-        return null;
+      if (authState is Unauthenticated) {
+        return isLoggingIn ? null : RouteNames.loginPath;
       }
 
-      final isLoggedIn = authState is Authenticated;
-
-      if (!isLoggedIn && !isLoggingIn && !isRegistering) {
-        return RouteNames.loginPath;
-      }
-
-      if (isLoggedIn && (isLoggingIn || isRegistering)) {
-        return RouteNames.dashboardPath;
+      if (authState is Authenticated) {
+        if (isLoggingIn) return RouteNames.dashboardPath;
       }
 
       return null;
@@ -77,6 +74,18 @@ class AppRouter {
             ),
             BlocProvider<VisitListBloc>(
               create: (context) => sl<VisitListBloc>(),
+            ),
+            BlocProvider<BayBloc>(
+              create: (context) => sl<BayBloc>(),
+            ),
+            BlocProvider<JobBloc>(
+              create: (context) => sl<JobBloc>(),
+            ),
+            BlocProvider<LaborBloc>(
+              create: (context) => sl<LaborBloc>(),
+            ),
+            BlocProvider<BillingBloc>(
+              create: (context) => sl<BillingBloc>(),
             ),
           ],
           child: const DashboardPage(),
