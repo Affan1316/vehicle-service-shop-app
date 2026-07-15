@@ -30,4 +30,7 @@ class RouteNames {
 
   static const String quoteListName = 'quotes';
   static const String quoteListPath = '/quotes';
+
+  static const String billingListName = 'billing';
+  static const String billingListPath = '/billing';
 }

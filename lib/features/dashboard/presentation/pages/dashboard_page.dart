@@ -818,10 +818,11 @@ class _DashboardPageState extends State<DashboardPage> {
 
     if (role == 'manager') {
       modules = [
-        _buildPlaceholderModule(
+        _buildActiveModuleCard(
           'Billing & Payment Disputes',
           'Generate parts/labor invoices, record deposits, and process customer credit refunds.',
           LucideIcons.receipt,
+          () => context.push('/billing'),
         ),
         const SizedBox(height: 16),
         _buildPlaceholderModule(
@@ -933,6 +934,78 @@ class _DashboardPageState extends State<DashboardPage> {
             ),
           ),
         ],
+      ),
+    );
+  }
+
+  Widget _buildActiveModuleCard(String name, String desc, IconData icon, VoidCallback onTap) {
+    return InkWell(
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(12),
+      child: Container(
+        padding: const EdgeInsets.all(20),
+        decoration: BoxDecoration(
+          color: AppColors.bgSurface,
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(
+            color: AppColors.primary.withValues(alpha: 0.3),
+            width: 1.0,
+          ),
+          gradient: LinearGradient(
+            colors: [AppColors.bgSurface, AppColors.bgElevated.withValues(alpha: 0.3)],
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+          ),
+        ),
+        child: Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Icon(icon, color: AppColors.primary, size: 24),
+            const SizedBox(width: 16),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Expanded(
+                        child: Text(
+                          name,
+                          style: AppTypography.bodyLarge.copyWith(
+                            color: AppColors.textPrimary,
+                            fontWeight: FontWeight.bold,
+                          ),
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                      ),
+                      Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                        decoration: BoxDecoration(
+                          color: AppColors.primary.withValues(alpha: 0.15),
+                          borderRadius: BorderRadius.circular(4),
+                        ),
+                        child: Text(
+                          'ACTIVE',
+                          style: AppTypography.monospace.copyWith(
+                            color: AppColors.primary,
+                            fontSize: 8,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 8),
+                  Text(
+                    desc,
+                    style: AppTypography.bodySmall,
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }

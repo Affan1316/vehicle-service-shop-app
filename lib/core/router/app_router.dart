@@ -20,6 +20,8 @@ import '../../features/customer/presentation/bloc/vehicle_bloc.dart';
 import '../../features/dashboard/presentation/pages/dashboard_page.dart';
 import '../../features/quote/presentation/bloc/quote_bloc.dart';
 import '../../features/quote/presentation/pages/quotes_list_page.dart';
+import '../../features/billing/presentation/bloc/billing_bloc.dart';
+import '../../features/billing/presentation/pages/billing_page.dart';
 import 'route_names.dart';
 
 class AppRouter {
@@ -147,6 +149,14 @@ class AppRouter {
         builder: (context, state) => BlocProvider<QuoteBloc>(
           create: (context) => sl<QuoteBloc>(),
           child: const QuotesListPage(),
+        ),
+      ),
+      GoRoute(
+        name: RouteNames.billingListName,
+        path: RouteNames.billingListPath,
+        builder: (context, state) => BlocProvider<BillingBloc>(
+          create: (context) => sl<BillingBloc>(),
+          child: const BillingPage(),
         ),
       ),
     ],
