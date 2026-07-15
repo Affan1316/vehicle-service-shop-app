@@ -17,6 +17,15 @@ import '../../../visit/domain/entities/visit.dart';
 import '../../../visit/presentation/bloc/visit_list_bloc.dart';
 import '../../../visit/presentation/bloc/visit_list_event.dart';
 import '../../../visit/presentation/bloc/visit_list_state.dart';
+import '../../../../core/di/injection_container.dart';
+import '../../../quote/domain/usecases/get_quotes.dart';
+import '../../../quote/domain/usecases/update_quote.dart';
+import '../../../billing/domain/usecases/get_invoices.dart';
+import '../../../vehicle/domain/usecases/get_vehicles_by_customer_usecase.dart';
+import '../../../visit/domain/usecases/get_visits_usecase.dart';
+import '../../../quote/domain/entities/quote.dart';
+import '../../../billing/domain/entities/invoice.dart';
+import '../../../vehicle/domain/entities/vehicle.dart';
 
 class DashboardPage extends StatefulWidget {
   const DashboardPage({super.key});
@@ -26,6 +35,81 @@ class DashboardPage extends StatefulWidget {
 }
 
 class _DashboardPageState extends State<DashboardPage> {
+  bool _isCustomerDataLoading = true;
+  bool _hasAttemptedLoad = false;
+  List<Vehicle> _customerVehicles = [];
+  List<Visit> _customerVisits = [];
+  List<Quote> _customerQuotes = [];
+  List<Invoice> _customerInvoices = [];
+  String? _customerDataError;
+
+  Future<void> _loadCustomerData(String customerId) async {
+    setState(() {
+      _isCustomerDataLoading = true;
+      _customerDataError = null;
+    });
+
+    try {
+      final vehiclesRes = await sl<GetVehiclesByCustomerUseCase>().call(customerId);
+      vehiclesRes.fold(
+        (failure) => throw Exception(failure.message),
+        (vehicles) => _customerVehicles = vehicles,
+      );
+
+      final visitsRes = await sl<GetVisitsUseCase>().call(limit: 100);
+      visitsRes.fold(
+        (failure) => throw Exception(failure.message),
+        (visits) {
+          _customerVisits = visits.where((v) => v.customerId == customerId).toList();
+        },
+      );
+
+      final quotesRes = await sl<GetQuotesUseCase>().call(limit: 100);
+      quotesRes.fold(
+        (failure) => throw Exception(failure.message),
+        (quotes) {
+          _customerQuotes = quotes.where((q) => q.customerId == customerId).toList();
+        },
+      );
+
+      final invoicesRes = await sl<GetInvoicesUseCase>().call(limit: 100);
+      invoicesRes.fold(
+        (failure) => throw Exception(failure.message),
+        (invoices) {
+          _customerInvoices = invoices.where((inv) => inv.customerId == customerId).toList();
+        },
+      );
+    } catch (e) {
+      _customerDataError = e.toString();
+    } finally {
+      if (mounted) {
+        setState(() {
+          _isCustomerDataLoading = false;
+        });
+      }
+    }
+  }
+
+  Future<void> _updateQuoteStatus(String quoteId, String status) async {
+    final res = await sl<UpdateQuoteUseCase>().call(quoteId, status: status);
+    res.fold(
+      (failure) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Failed to update quote: ${failure.message}'), backgroundColor: AppColors.dangerBorder),
+        );
+      },
+      (updatedQuote) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Quote marked as $status!'), backgroundColor: AppColors.successBorder),
+        );
+        final authState = context.read<AuthBloc>().state;
+        if (authState is Authenticated && authState.user.customerId != null) {
+          _loadCustomerData(authState.user.customerId!);
+        }
+      },
+    );
+  }
+
   @override
   void initState() {
     super.initState();
@@ -108,9 +192,15 @@ class _DashboardPageState extends State<DashboardPage> {
               role = authState.user.role;
             }
 
-            return RefreshIndicator(
+             return RefreshIndicator(
               onRefresh: () async {
-                if (role == 'customer') return;
+                if (role == 'customer') {
+                  final custId = (authState as Authenticated).user.customerId;
+                  if (custId != null) {
+                    await _loadCustomerData(custId);
+                  }
+                  return;
+                }
                 context.read<CustomerBloc>().add(FetchCustomers());
                 context.read<VehicleListBloc>().add(const FetchVehiclesList());
                 context.read<VisitListBloc>().add(FetchVisitsList());
@@ -125,9 +215,16 @@ class _DashboardPageState extends State<DashboardPage> {
                   children: [
                     _buildHeader(context),
                     const SizedBox(height: 32),
-                    if (role == 'customer')
-                      _buildCustomerPlaceholder(context)
-                    else ...[
+                    if (role == 'customer') ...[
+                      Builder(builder: (context) {
+                        final custId = (authState as Authenticated).user.customerId;
+                        if (custId != null && !_hasAttemptedLoad) {
+                          _hasAttemptedLoad = true;
+                          Future.microtask(() => _loadCustomerData(custId));
+                        }
+                        return _buildCustomerDashboard(context);
+                      }),
+                    ] else ...[
                       _buildStatsGrid(isDesktop, isTablet, role),
                       const SizedBox(height: 32),
                       _buildShortcutsSection(isDesktop, isTablet, role),
@@ -943,138 +1040,537 @@ class _DashboardPageState extends State<DashboardPage> {
     );
   }
 
-  Widget _buildActiveModuleCard(String name, String desc, IconData icon, VoidCallback onTap) {
-    return InkWell(
-      onTap: onTap,
-      borderRadius: BorderRadius.circular(12),
-      child: Container(
-        padding: const EdgeInsets.all(20),
-        decoration: BoxDecoration(
-          color: AppColors.bgSurface,
-          borderRadius: BorderRadius.circular(12),
-          border: Border.all(
-            color: AppColors.primary.withValues(alpha: 0.3),
-            width: 1.0,
-          ),
-          gradient: LinearGradient(
-            colors: [AppColors.bgSurface, AppColors.bgElevated.withValues(alpha: 0.3)],
-            begin: Alignment.topLeft,
-            end: Alignment.bottomRight,
-          ),
+  Widget _buildCustomerDashboard(BuildContext context) {
+    if (_isCustomerDataLoading) {
+      return const Center(
+        child: Padding(
+          padding: EdgeInsets.symmetric(vertical: 64.0),
+          child: CircularProgressIndicator(color: AppColors.primary),
         ),
-        child: Row(
-          crossAxisAlignment: CrossAxisAlignment.start,
+      );
+    }
+
+    if (_customerDataError != null) {
+      return Center(
+        child: Text(
+          'Failed to load customer profile: $_customerDataError',
+          style: const TextStyle(color: Colors.redAccent),
+        ),
+      );
+    }
+
+    final activeVisits = _customerVisits.where((v) => v.status.toLowerCase() != 'completed' && v.status.toLowerCase() != 'closed').toList();
+    final activeVisit = activeVisits.isNotEmpty ? activeVisits.first : null;
+
+    final pendingQuotes = _customerQuotes.where((q) => q.status.toLowerCase() == 'issued').toList();
+
+    final unpaidInvoices = _customerInvoices.where((i) => i.status.toLowerCase() == 'issued' || i.status.toLowerCase() == 'disputed').toList();
+    double outstandingSum = 0.0;
+    for (var inv in unpaidInvoices) {
+      outstandingSum += inv.totalBalance;
+    }
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        _buildCustomerOverviewMetrics(
+          vehiclesCount: _customerVehicles.length,
+          activeVisitsCount: activeVisits.length,
+          pendingQuotesCount: pendingQuotes.length,
+          outstandingBalance: outstandingSum,
+        ),
+        const SizedBox(height: 32),
+        _buildCustomerServiceProgressSection(activeVisit),
+        const SizedBox(height: 32),
+        _buildCustomerQuotesSection(pendingQuotes),
+        const SizedBox(height: 32),
+        _buildCustomerBillingSection(_customerInvoices),
+        const SizedBox(height: 32),
+        _buildCustomerUpcomingSection(),
+      ],
+    );
+  }
+
+  Widget _buildCustomerOverviewMetrics({
+    required int vehiclesCount,
+    required int activeVisitsCount,
+    required int pendingQuotesCount,
+    required double outstandingBalance,
+  }) {
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final double width = constraints.maxWidth;
+        final int crossAxisCount = width >= 768 ? 4 : 2;
+
+        return GridView.count(
+          crossAxisCount: crossAxisCount,
+          crossAxisSpacing: 12,
+          mainAxisSpacing: 12,
+          shrinkWrap: true,
+          physics: const NeverScrollableScrollPhysics(),
+          childAspectRatio: width >= 768 ? 1.6 : 1.3,
           children: [
-            Icon(icon, color: AppColors.primary, size: 24),
-            const SizedBox(width: 16),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      Expanded(
-                        child: Text(
-                          name,
-                          style: AppTypography.bodyLarge.copyWith(
-                            color: AppColors.textPrimary,
-                            fontWeight: FontWeight.bold,
-                          ),
-                          overflow: TextOverflow.ellipsis,
-                        ),
-                      ),
-                      Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-                        decoration: BoxDecoration(
-                          color: AppColors.primary.withValues(alpha: 0.15),
-                          borderRadius: BorderRadius.circular(4),
-                        ),
-                        child: Text(
-                          'ACTIVE',
-                          style: AppTypography.monospace.copyWith(
-                            color: AppColors.primary,
-                            fontSize: 8,
-                            fontWeight: FontWeight.bold,
-                          ),
-                        ),
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 8),
-                  Text(
-                    desc,
-                    style: AppTypography.bodySmall,
-                  ),
-                ],
-              ),
-            ),
+            _buildCustomerMetricCard('OWNED FLEET', '$vehiclesCount Vehicles', LucideIcons.car, Colors.tealAccent),
+            _buildCustomerMetricCard('ACTIVE VISITS', '$activeVisitsCount Active', LucideIcons.clipboardClock, AppColors.primary),
+            _buildCustomerMetricCard('PENDING ESTIMATES', '$pendingQuotesCount Review', LucideIcons.fileText, Colors.purpleAccent),
+            _buildCustomerMetricCard('BALANCE DUE', '\$${outstandingBalance.toStringAsFixed(2)}', LucideIcons.receipt, Colors.orangeAccent),
           ],
-        ),
+        );
+      },
+    );
+  }
+
+  Widget _buildCustomerMetricCard(String label, String value, IconData icon, Color color) {
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: AppColors.bgSurface,
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: AppColors.borderDefault),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Text(
+                label,
+                style: AppTypography.monospace.copyWith(
+                  color: AppColors.textSecondary,
+                  fontSize: 9,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+              Icon(icon, size: 16, color: color),
+            ],
+          ),
+          const SizedBox(height: 8),
+          Text(
+            value,
+            style: AppTypography.headingMedium.copyWith(
+              color: AppColors.textPrimary,
+              fontWeight: FontWeight.bold,
+              fontSize: 18,
+            ),
+          ),
+        ],
       ),
     );
   }
 
-  Widget _buildCustomerPlaceholder(BuildContext context) {
-    return Center(
-      child: Container(
-        constraints: const BoxConstraints(maxWidth: 600),
-        padding: const EdgeInsets.all(32),
+  Widget _buildCustomerServiceProgressSection(Visit? activeVisit) {
+    if (activeVisit == null) {
+      return Container(
+        width: double.infinity,
+        padding: const EdgeInsets.all(24),
         decoration: BoxDecoration(
           color: AppColors.bgSurface,
-          borderRadius: BorderRadius.circular(16),
-          border: Border.all(color: AppColors.borderDefault, width: 1.5),
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(color: AppColors.borderDefault),
         ),
         child: Column(
-          mainAxisSize: MainAxisSize.min,
           children: [
-            Container(
-              padding: const EdgeInsets.all(16),
-              decoration: BoxDecoration(
-                color: AppColors.primary.withValues(alpha: 0.1),
-                shape: BoxShape.circle,
-              ),
-              child: const Icon(
-                LucideIcons.wrench,
-                color: AppColors.primary,
-                size: 40,
-              ),
-            ),
-            const SizedBox(height: 24),
+            Icon(LucideIcons.checkCircle2, size: 36, color: AppColors.successBorder),
+            const SizedBox(height: 12),
             Text(
-              'Customer Portal Coming Soon',
-              style: AppTypography.headingLarge.copyWith(color: AppColors.textPrimary),
-              textAlign: TextAlign.center,
+              'All Clear!',
+              style: AppTypography.headingMedium.copyWith(color: AppColors.textPrimary),
             ),
-            const SizedBox(height: 16),
+            const SizedBox(height: 8),
             Text(
-              'Your customer self-service hub is currently under active development.\n\n'
-              'Once released, you will be able to track live vehicle service status, approve quote estimates, view maintenance history logs, and process invoices directly from this portal.',
-              style: AppTypography.bodyLarge.copyWith(height: 1.5),
-              textAlign: TextAlign.center,
-            ),
-            const SizedBox(height: 32),
-            Container(
-              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-              decoration: BoxDecoration(
-                color: AppColors.bgElevated,
-                borderRadius: BorderRadius.circular(8),
-                border: Border.all(color: AppColors.borderDefault),
-              ),
-              child: Row(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  const Icon(LucideIcons.info, color: AppColors.textSecondary, size: 16),
-                  const SizedBox(width: 8),
-                  Text(
-                    'Need assistance? Contact shop administration.',
-                    style: AppTypography.bodySmall.copyWith(color: AppColors.textSecondary),
-                  ),
-                ],
-              ),
+              'No active vehicle service in progress at this time.',
+              style: AppTypography.bodyMedium.copyWith(color: AppColors.textSecondary),
             ),
           ],
         ),
+      );
+    }
+
+    final double progress = _getStatusProgressValue(activeVisit.status);
+    final statusColor = _getStatusColor(activeVisit.status);
+
+    return Container(
+      padding: const EdgeInsets.all(24),
+      decoration: BoxDecoration(
+        color: AppColors.bgSurface,
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: AppColors.borderDefault),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Text(
+                'LIVE SERVICE TRACKER',
+                style: AppTypography.bodySmall.copyWith(
+                  color: AppColors.textSecondary,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                decoration: BoxDecoration(
+                  color: statusColor.withOpacity(0.15),
+                  borderRadius: BorderRadius.circular(4),
+                ),
+                child: Text(
+                  _formatStatusLabel(activeVisit.status),
+                  style: AppTypography.monospace.copyWith(
+                    color: statusColor,
+                    fontSize: 9,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 16),
+          Text(
+            activeVisit.vehicleName ?? 'Your Vehicle',
+            style: AppTypography.headingMedium.copyWith(color: AppColors.textPrimary),
+          ),
+          const SizedBox(height: 20),
+          ClipRRect(
+            borderRadius: BorderRadius.circular(4),
+            child: LinearProgressIndicator(
+              value: progress,
+              backgroundColor: AppColors.bgElevated,
+              valueColor: AlwaysStoppedAnimation<Color>(statusColor),
+              minHeight: 8,
+            ),
+          ),
+          const SizedBox(height: 16),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              _buildStepLabel('Intake', progress >= 0.2),
+              _buildStepLabel('Diagnose', progress >= 0.4),
+              _buildStepLabel('Quote', progress >= 0.6),
+              _buildStepLabel('Service', progress >= 0.8),
+              _buildStepLabel('Ready', progress >= 0.95),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildStepLabel(String label, bool isDone) {
+    return Text(
+      label,
+      style: AppTypography.bodySmall.copyWith(
+        color: isDone ? AppColors.textPrimary : AppColors.textDisabled,
+        fontWeight: isDone ? FontWeight.bold : FontWeight.normal,
+      ),
+    );
+  }
+
+  Widget _buildCustomerQuotesSection(List<Quote> quotes) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          'ESTIMATES & QUOTES AWAITING APPROVAL',
+          style: AppTypography.bodySmall.copyWith(
+            color: AppColors.textSecondary,
+            fontWeight: FontWeight.bold,
+            letterSpacing: 0.8,
+          ),
+        ),
+        const SizedBox(height: 12),
+        if (quotes.isEmpty)
+          Container(
+            width: double.infinity,
+            padding: const EdgeInsets.all(20),
+            decoration: BoxDecoration(
+              color: AppColors.bgSurface,
+              borderRadius: BorderRadius.circular(12),
+              border: Border.all(color: AppColors.borderDefault),
+            ),
+            child: Text(
+              'No estimates awaiting your approval.',
+              style: AppTypography.bodyMedium.copyWith(color: AppColors.textSecondary),
+            ),
+          )
+        else
+          ListView.separated(
+            shrinkWrap: true,
+            physics: const NeverScrollableScrollPhysics(),
+            itemCount: quotes.length,
+            separatorBuilder: (context, index) => const SizedBox(height: 12),
+            itemBuilder: (context, index) {
+              final quote = quotes[index];
+              return Container(
+                padding: const EdgeInsets.all(20),
+                decoration: BoxDecoration(
+                  color: AppColors.bgSurface,
+                  borderRadius: BorderRadius.circular(12),
+                  border: Border.all(color: AppColors.borderDefault),
+                ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Text(
+                          'Quote ID: ${quote.quoteId.substring(0, 5).toUpperCase()}',
+                          style: AppTypography.bodyLarge.copyWith(fontWeight: FontWeight.bold),
+                        ),
+                        Text(
+                          '\$${quote.totalAmount.toStringAsFixed(2)}',
+                          style: AppTypography.bodyLarge.copyWith(
+                            color: AppColors.primary,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 8),
+                    Text(
+                      'Expires on: ${quote.validUntil.year}-${quote.validUntil.month.toString().padLeft(2, '0')}-${quote.validUntil.day.toString().padLeft(2, '0')}',
+                      style: AppTypography.bodySmall.copyWith(color: AppColors.textSecondary),
+                    ),
+                    const SizedBox(height: 16),
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.end,
+                      children: [
+                        OutlinedButton(
+                          style: OutlinedButton.styleFrom(
+                            side: const BorderSide(color: AppColors.dangerBorder),
+                          ),
+                          onPressed: () => _updateQuoteStatus(quote.quoteId, 'declined'),
+                          child: const Text('Decline', style: TextStyle(color: AppColors.dangerText)),
+                        ),
+                        const SizedBox(width: 12),
+                        ElevatedButton(
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: AppColors.successBorder,
+                          ),
+                          onPressed: () => _updateQuoteStatus(quote.quoteId, 'approved'),
+                          child: const Text('Approve Estimate', style: TextStyle(color: AppColors.bgDefault)),
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
+              );
+            },
+          ),
+      ],
+    );
+  }
+
+  Widget _buildCustomerBillingSection(List<Invoice> invoices) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          'MAINTENANCE & INVOICES HISTORY',
+          style: AppTypography.bodySmall.copyWith(
+            color: AppColors.textSecondary,
+            fontWeight: FontWeight.bold,
+            letterSpacing: 0.8,
+          ),
+        ),
+        const SizedBox(height: 12),
+        if (invoices.isEmpty)
+          Container(
+            width: double.infinity,
+            padding: const EdgeInsets.all(20),
+            decoration: BoxDecoration(
+              color: AppColors.bgSurface,
+              borderRadius: BorderRadius.circular(12),
+              border: Border.all(color: AppColors.borderDefault),
+            ),
+            child: Text(
+              'No invoices logged yet.',
+              style: AppTypography.bodyMedium.copyWith(color: AppColors.textSecondary),
+            ),
+          )
+        else
+          ListView.separated(
+            shrinkWrap: true,
+            physics: const NeverScrollableScrollPhysics(),
+            itemCount: invoices.length > 3 ? 3 : invoices.length,
+            separatorBuilder: (context, index) => const SizedBox(height: 12),
+            itemBuilder: (context, index) {
+              final invoice = invoices[index];
+              final isPaid = invoice.status.toLowerCase() == 'paid';
+              return Container(
+                padding: const EdgeInsets.all(16),
+                decoration: BoxDecoration(
+                  color: AppColors.bgSurface,
+                  borderRadius: BorderRadius.circular(12),
+                  border: Border.all(color: AppColors.borderDefault),
+                ),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          'Invoice: WO-${invoice.workOrderId.substring(0, 5).toUpperCase()}',
+                          style: AppTypography.bodyMedium.copyWith(fontWeight: FontWeight.bold),
+                        ),
+                        const SizedBox(height: 4),
+                        Text(
+                          'Issued: ${invoice.issuedAt.year}-${invoice.issuedAt.month.toString().padLeft(2, '0')}-${invoice.issuedAt.day.toString().padLeft(2, '0')}',
+                          style: AppTypography.bodySmall.copyWith(color: AppColors.textDisabled),
+                        ),
+                      ],
+                    ),
+                    Column(
+                      crossAxisAlignment: CrossAxisAlignment.end,
+                      children: [
+                        Text(
+                          '\$${invoice.amountDue.toStringAsFixed(2)}',
+                          style: AppTypography.bodyMedium.copyWith(
+                            color: AppColors.textPrimary,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                        const SizedBox(height: 4),
+                        Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                          decoration: BoxDecoration(
+                            color: (isPaid ? AppColors.successBorder : Colors.orangeAccent).withOpacity(0.15),
+                            borderRadius: BorderRadius.circular(4),
+                          ),
+                          child: Text(
+                            invoice.status.toUpperCase(),
+                            style: TextStyle(
+                              color: isPaid ? AppColors.successBorder : Colors.orangeAccent,
+                              fontSize: 9,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
+              );
+            },
+          ),
+      ],
+    );
+  }
+
+  Widget _buildCustomerUpcomingSection() {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          'UPCOMING CUSTOMER PORTAL ENHANCEMENTS',
+          style: AppTypography.bodySmall.copyWith(
+            color: AppColors.textSecondary,
+            fontWeight: FontWeight.bold,
+            letterSpacing: 0.8,
+          ),
+        ),
+        const SizedBox(height: 12),
+        LayoutBuilder(
+          builder: (context, constraints) {
+            final double width = constraints.maxWidth;
+            final int crossAxisCount = width >= 768 ? 3 : 1;
+
+            return GridView.count(
+              crossAxisCount: crossAxisCount,
+              crossAxisSpacing: 12,
+              mainAxisSpacing: 12,
+              shrinkWrap: true,
+              physics: const NeverScrollableScrollPhysics(),
+              childAspectRatio: width >= 768 ? 1.6 : 3.0,
+              children: [
+                _buildUpcomingCard(
+                  'Online Bill Pay',
+                  'Secure checkout using credit card, Apple Pay, or Google Pay directly from this portal.',
+                  LucideIcons.creditCard,
+                ),
+                _buildUpcomingCard(
+                  'Book Appointments',
+                  'Schedule visits, choose a diagnostic service bay, and assign your preferred advisor.',
+                  LucideIcons.calendar,
+                ),
+                _buildUpcomingCard(
+                  'Direct Technician Chat',
+                  'Exchange diagnostic media and chat in real-time with the technician working on your car.',
+                  LucideIcons.messageSquare,
+                ),
+              ],
+            );
+          },
+        ),
+      ],
+    );
+  }
+
+  Widget _buildUpcomingCard(String title, String description, IconData icon) {
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: AppColors.bgSurface.withOpacity(0.6),
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: AppColors.borderDefault.withOpacity(0.5)),
+      ),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Icon(icon, size: 20, color: AppColors.textDisabled),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Expanded(
+                      child: Text(
+                        title,
+                        style: AppTypography.bodyMedium.copyWith(
+                          color: AppColors.textSecondary,
+                          fontWeight: FontWeight.bold,
+                        ),
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                    ),
+                    Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 1),
+                      decoration: BoxDecoration(
+                        color: AppColors.textDisabled.withOpacity(0.15),
+                        borderRadius: BorderRadius.circular(3),
+                      ),
+                      child: Text(
+                        'SOON',
+                        style: AppTypography.monospace.copyWith(
+                          color: AppColors.textDisabled,
+                          fontSize: 8,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 6),
+                Expanded(
+                  child: Text(
+                    description,
+                    style: AppTypography.bodySmall.copyWith(color: AppColors.textDisabled, fontSize: 11),
+                    overflow: TextOverflow.fade,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
       ),
     );
   }
